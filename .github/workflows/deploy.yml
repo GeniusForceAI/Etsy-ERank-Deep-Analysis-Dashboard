@@ -27,9 +27,34 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
-      - name: Copy advanced dashboard to root
+      - name: Set up project structure for GitHub Pages
         run: |
+          # Ensure advanced dashboard is the default landing page
           cp Reports/advanced-dashboard.html index.html
+          
+          # Copy original index.html as main-dashboard.html
+          cp Reports/index.html main-dashboard.html
+          
+          # Fix links in advanced-dashboard.html to point to main-dashboard.html
+          sed -i 's/href="index.html"/href="main-dashboard.html"/g' index.html
+          
+          # Ensure all supporting directories and files are copied
+          cp -r Reports/css .
+          cp -r Reports/js .
+          cp -r Reports/advanced-dashboard.html .
+          
+          # If there are images, copy them too
+          if [ -d Reports/images ]; then
+            cp -r Reports/images .
+          fi
+          
+          # Copy any data files needed for the sample data
+          if [ -d Reports/Erank_Raw_Data ]; then
+            cp -r Reports/Erank_Raw_Data .
+          fi
+          
+          echo "Successfully set up project structure for GitHub Pages"
+          ls -la
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
