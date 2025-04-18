@@ -27,42 +27,59 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
-      - name: Set up project structure for GitHub Pages
+      - name: Debug repository contents
         run: |
-          # First list what's in the Reports directory
-          echo "Listing Reports directory:"
-          ls -la Reports/
+          echo "Repository root contents:"
+          ls -la
+          echo "
+Reports directory contents:"
+          ls -la Reports/ || echo "Reports directory not found"
+          echo "
+Advanced dashboard exists?"
+          [ -f Reports/advanced-dashboard.html ] && echo "Yes, file exists" || echo "No, file not found"
+      
+      - name: Create static GitHub Pages site
+        run: |
+          # Create simple site directory structure
+          mkdir -p site
           
-          # Simply copy the entire Reports directory to the root
-          # This ensures all relative paths stay intact
-          cp -r Reports/* .
+          # Copy everything from Reports directory to site directory if it exists
+          if [ -d Reports ]; then
+            cp -r Reports/* site/
+          fi
           
-          # Create a simplified index.html redirect to advanced-dashboard.html
-          cat > index.html << 'EOL'
+          # Create a direct redirect in the root index.html
+          cat > site/index.html << 'EOL'
           <!DOCTYPE html>
-          <html>
+          <html lang="en">
           <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta http-equiv="refresh" content="0; url=advanced-dashboard.html" />
-            <title>Redirecting to Advanced Dashboard</title>
+            <title>Etsy Dashboard</title>
           </head>
-          <body>
-            <p>If you are not redirected automatically, <a href="advanced-dashboard.html">click here</a>.</p>
+          <body style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif;">
+            <div style="text-align: center;">
+              <h1>Redirecting to Advanced Dashboard</h1>
+              <p>If you are not redirected automatically, <a href="advanced-dashboard.html">click here</a>.</p>
+            </div>
           </body>
           </html>
           EOL
           
-          # Create a .nojekyll file to tell GitHub Pages not to use Jekyll
-          touch .nojekyll
+          # Create .nojekyll file to prevent GitHub Pages from using Jekyll
+          touch site/.nojekyll
           
-          # List what's in the root directory now
-          echo "Final root directory contents:"
-          ls -la
-          
-      - name: Upload artifact
+          # Display final site contents
+          echo "
+Final site directory contents:"
+          ls -la site/
+      
+      - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
-          
+          path: 'site'
+      
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
