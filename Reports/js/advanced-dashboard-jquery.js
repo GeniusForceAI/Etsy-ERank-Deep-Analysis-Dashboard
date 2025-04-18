@@ -557,11 +557,18 @@ function switchVisualization(vizType) {
     } else {
         $('#table-view').hide();
         $('#chart-view').fadeIn(300);
-        updateChart();
+        
+        // If bar chart is selected, render the strategic bar chart
+        if (vizType === 'bar') {
+            renderStrategyBarChart();
+        } else {
+            updateChart();
+        }
+
         
         // Update title based on visualization type
         const titleMap = {
-            'bar': 'Bar Chart',
+            'bar': 'Strategic Performance Analysis',
             'scatter': 'Scatter Plot',
             'pie': 'Pie Chart',
             'bubble': 'Bubble Chart',
@@ -571,6 +578,36 @@ function switchVisualization(vizType) {
         
         $('#viz-title').text(titleMap[vizType] || 'Chart Visualization');
     }
+}
+
+/**
+ * Render strategic bar chart to help visualize key performance metrics
+ */
+function renderStrategyBarChart() {
+    // Check if we have data to display
+    if (filteredData.length === 0) {
+        $('#chart-message').removeClass('d-none');
+        return;
+    }
+
+    $('#chart-message').addClass('d-none');
+    const canvas = document.getElementById('chart-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Clear any existing chart before creating a new one
+    if (chart) {
+        chart.destroy();
+    }
+    
+    // Get data and options using the prepareBarChartData function
+    const [chartData, options] = prepareBarChartData();
+    
+    // Create new chart
+    chart = new Chart(ctx, {
+        type: 'bar',
+        data: chartData,
+        options: options
+    });
 }
 
 /**
@@ -940,6 +977,12 @@ function showDataLoadedState() {
  * Update the chart visualization
  */
 function updateChart() {
+    // Skip if we're using the bar chart since we have a dedicated function for that
+    if (currentVisualization === 'bar') {
+        renderStrategyBarChart();
+        return;
+    }
+    
     // Get the chart canvas
     const ctx = document.getElementById('chart-canvas').getContext('2d');
     
@@ -962,9 +1005,6 @@ function updateChart() {
     let options;
     
     switch (currentVisualization) {
-        case 'bar':
-            [chartData, options] = prepareBarChartData();
-            break;
         case 'scatter':
             [chartData, options] = prepareScatterPlotData();
             break;
@@ -993,67 +1033,208 @@ function updateChart() {
 }
 
 /**
- * Prepare data for bar chart
+ * Prepare data for strategic bar chart visualization
  */
 function prepareBarChartData() {
-    // Group data by shop
+    // Prepare data for conversion rate & revenue analysis (key strategic metrics)
     const shopData = {};
-    const metricField = 'Total Views';  // Default metric
     
-    // Limit to top 10 shops for readability
-    const limitedData = [...filteredData].sort((a, b) => b[metricField] - a[metricField]).slice(0, 10);
-    
-    // Extract shop names and values
-    limitedData.forEach(item => {
+    // Calculate conversion rates & revenue per view for each item
+    filteredData.forEach(item => {
         const shopName = item['Shop / Listing'].split(' - ')[0] || 'Unknown';
+        const views = parseFloat(item['Total Views'] || 0);
+        const sales = parseFloat(item['Est. Sales'] || 0);
+        const revenue = parseFloat(item['Est. Revenue'] || 0);
+        const price = parseFloat(item['Price'] || 0);
+        
         if (!shopData[shopName]) {
-            shopData[shopName] = 0;
+            shopData[shopName] = {
+                totalViews: 0,
+                totalSales: 0,
+                totalRevenue: 0,
+                avgPrice: 0,
+                itemCount: 0
+            };
         }
-        shopData[shopName] += item[metricField] || 0;
+        
+        // Accumulate shop statistics
+        shopData[shopName].totalViews += views;
+        shopData[shopName].totalSales += sales;
+        shopData[shopName].totalRevenue += revenue;
+        shopData[shopName].avgPrice = ((shopData[shopName].avgPrice * shopData[shopName].itemCount) + price) / (shopData[shopName].itemCount + 1);
+        shopData[shopName].itemCount++;
     });
     
-    // Prepare chart data
+    // Calculate conversion rates and revenue per view for each shop
+    Object.keys(shopData).forEach(shop => {
+        shopData[shop].conversionRate = shopData[shop].totalViews > 0 ? 
+            (shopData[shop].totalSales / shopData[shop].totalViews) * 100 : 0;
+        shopData[shop].revenuePerView = shopData[shop].totalViews > 0 ? 
+            shopData[shop].totalRevenue / shopData[shop].totalViews : 0;
+    });
+    
+    // Sort shops by revenue per view (high strategic value metric)
+    const sortedShops = Object.keys(shopData).sort((a, b) => 
+        shopData[b].revenuePerView - shopData[a].revenuePerView);
+    
+    // Limit to top 10 most efficient shops
+    const topShops = sortedShops.slice(0, 10);
+    
+    // Prepare datasets for bar chart
+    const labels = topShops;
+    const conversionRates = topShops.map(shop => shopData[shop].conversionRate);
+    const revenuePerView = topShops.map(shop => shopData[shop].revenuePerView);
+    const averagePrices = topShops.map(shop => shopData[shop].avgPrice);
+    
+    // Prepare chart data with multiple metrics for strategic insights
     const chartData = {
-        labels: Object.keys(shopData),
-        datasets: [{
-            label: 'Total Views',
-            data: Object.values(shopData),
-            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-        }]
+        labels: labels,
+        datasets: [
+            {
+                label: 'Revenue per View ($)',
+                data: revenuePerView,
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                order: 1,
+                yAxisID: 'y'
+            },
+            {
+                label: 'Conversion Rate (%)',
+                data: conversionRates,
+                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                type: 'line',
+                order: 0,
+                yAxisID: 'y1'
+            },
+            {
+                label: 'Avg. Price ($)',
+                data: averagePrices,
+                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                hidden: true, // Hidden by default but can be toggled on
+                yAxisID: 'y'
+            }
+        ]
     };
     
-    // Chart options
+    // Enhanced chart options
     const options = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             title: {
                 display: true,
-                text: 'Top 10 Shops by Total Views'
+                text: 'Top 10 Shops by Revenue Efficiency',
+                font: {
+                    size: 16,
+                    weight: 'bold'
+                },
+                padding: {
+                    top: 10,
+                    bottom: 30
+                },
+                color: document.body.classList.contains('dark-mode') ? '#ffffff' : '#333333'
+            },
+            subtitle: {
+                display: true,
+                text: 'Shows which shops most effectively convert views to revenue',
+                color: document.body.classList.contains('dark-mode') ? '#c0c0c4' : '#6c757d',
+                padding: {
+                    bottom: 10
+                }
             },
             tooltip: {
-                mode: 'index',
-                intersect: false,
+                callbacks: {
+                    label: function(context) {
+                        const shop = context.label;
+                        const dataset = context.dataset;
+                        const value = context.raw;
+                        
+                        // Format based on dataset type
+                        if (dataset.label === 'Revenue per View ($)') {
+                            return `Revenue per View: $${value.toFixed(3)}`;
+                        } else if (dataset.label === 'Conversion Rate (%)') {
+                            return `Conversion Rate: ${value.toFixed(2)}%`;
+                        } else if (dataset.label === 'Avg. Price ($)') {
+                            return `Avg. Price: $${value.toFixed(2)}`;
+                        }
+                    },
+                    afterLabel: function(context) {
+                        const shop = context.label;
+                        const shopInfo = shopData[shop];
+                        return [
+                            `Total Views: ${shopInfo.totalViews.toLocaleString()}`,
+                            `Total Sales: ${shopInfo.totalSales.toLocaleString()}`,
+                            `Total Revenue: $${shopInfo.totalRevenue.toLocaleString()}`
+                        ];
+                    }
+                }
             },
             legend: {
                 display: true,
-                position: 'top'
+                position: 'top',
+                labels: {
+                    color: document.body.classList.contains('dark-mode') ? '#ffffff' : '#333333'
+                }
             }
         },
         scales: {
-            y: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Total Views'
-                }
-            },
             x: {
                 title: {
                     display: true,
-                    text: 'Shop Name'
+                    text: 'Shop',
+                    color: document.body.classList.contains('dark-mode') ? '#ffffff' : '#333333'
+                },
+                ticks: {
+                    color: document.body.classList.contains('dark-mode') ? '#ffffff' : '#333333',
+                    callback: function(value, index) {
+                        // Shorten shop names to fit
+                        const label = this.getLabelForValue(value);
+                        return label.length > 12 ? label.substr(0, 10) + '...' : label;
+                    }
+                },
+                grid: {
+                    display: false
+                }
+            },
+            y: {
+                type: 'linear',
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Revenue per View ($)',
+                    color: 'rgba(54, 162, 235, 1)'
+                },
+                ticks: {
+                    color: document.body.classList.contains('dark-mode') ? '#ffffff' : '#333333',
+                    callback: function(value) {
+                        return '$' + value.toFixed(3);
+                    }
+                },
+                grid: {
+                    color: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                }
+            },
+            y1: {
+                type: 'linear',
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Conversion Rate (%)',
+                    color: 'rgba(255, 99, 132, 1)'
+                },
+                ticks: {
+                    color: document.body.classList.contains('dark-mode') ? '#ffffff' : '#333333',
+                    callback: function(value) {
+                        return value.toFixed(1) + '%';
+                    }
+                },
+                grid: {
+                    display: false
                 }
             }
         }
