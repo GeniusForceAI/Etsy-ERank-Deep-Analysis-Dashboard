@@ -1,0 +1,195 @@
+/* Mobile Dashboard Styles for Etsy Analytics */
+
+/* Mobile-specific adjustments */
+@media (max-width: 767.98px) {
+    /* General mobile layout */
+    body {
+        padding-bottom: 70px; /* Space for mobile nav */
+        overflow-x: hidden;
+    }
+    
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    /* Header area */
+    .dashboard-section-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .dashboard-section-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    /* Mobile-friendly filters accordions */
+    #mobile-filters-toggle {
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    
+    .filters-accordion .accordion-button {
+        padding: 0.75rem 1rem;
+    }
+    
+    .filters-accordion .accordion-body {
+        padding: 0.75rem;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    
+    /* Visualization tabs - make them scrollable on mobile */
+    .viz-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+        padding-bottom: 5px;
+    }
+    
+    .viz-tabs::-webkit-scrollbar {
+        display: none; /* Chrome, Safari */
+    }
+    
+    .viz-tabs .btn-viz {
+        flex: 0 0 auto;
+        margin-right: 5px;
+    }
+    
+    /* Chart container */
+    #chart-view {
+        height: 60vh;
+        margin-bottom: 20px;
+    }
+    
+    #chart-canvas {
+        max-height: 100%;
+    }
+    
+    /* Table adjustments */
+    .table-responsive {
+        margin-bottom: 20px;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .data-table th, .data-table td {
+        white-space: nowrap;
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+    
+    /* Card styling for mobile */
+    .floating-card {
+        margin-bottom: 15px;
+    }
+    
+    .metric-card {
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    
+    /* Section spacing */
+    .dashboard-content section {
+        margin-bottom: 15px;
+    }
+    
+    /* Reorganize main content area */
+    .main-content-area {
+        flex-direction: column;
+    }
+    
+    /* Mobile navigation */
+    .mobile-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--card-bg);
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        height: 60px;
+    }
+    
+    .mobile-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 0;
+        color: var(--text-color);
+        text-decoration: none;
+    }
+    
+    .mobile-nav-item.active {
+        color: var(--primary-color);
+    }
+    
+    .mobile-nav-item i {
+        font-size: 1.25rem;
+        margin-bottom: 4px;
+    }
+    
+    .mobile-nav-item span {
+        font-size: 0.7rem;
+    }
+    
+    /* Panel visibility management for mobile */
+    .panel-group .panel {
+        display: none;
+    }
+    
+    .panel-group .panel.active {
+        display: block;
+    }
+    
+    /* Statistics and insights cards on mobile */
+    #product-insights-list, 
+    #marketing-strategy-list,
+    #trending-items-list,
+    #evergreen-items-list {
+        padding: 10px;
+    }
+    
+    /* Mobile-friendly accordions */
+    .accordion-button {
+        padding: 0.75rem 1rem;
+    }
+    
+    .accordion-body {
+        padding: 0.75rem;
+    }
+    
+    /* Dark mode toggle position on mobile */
+    .dark-mode-toggle {
+        top: 10px;
+        right: 10px;
+    }
+}
+
+/* Small fixes for medium/tablet devices */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .container-fluid {
+        max-width: 95%;
+    }
+    
+    .mobile-nav {
+        display: none;
+    }
+}
+
+/* Animation for mobile panel transitions */
+.panel-slide {
+    animation: panelSlide 0.3s ease-out;
+}
+
+@keyframes panelSlide {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
