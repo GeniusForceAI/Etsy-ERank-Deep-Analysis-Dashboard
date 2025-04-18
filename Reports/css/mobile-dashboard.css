@@ -74,7 +74,9 @@
     .table-responsive {
         margin-bottom: 20px;
         border-radius: 8px;
-        overflow: hidden;
+        overflow-x: auto;    /* Allow horizontal scrolling */
+        overflow-y: visible; /* Allow vertical content to be visible/scrollable */
+        max-height: 70vh;    /* Limit height to 70% of viewport height */
     }
     
     .data-table th, .data-table td {
