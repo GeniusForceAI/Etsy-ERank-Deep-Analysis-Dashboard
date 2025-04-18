@@ -12,14 +12,43 @@ let currentVisualization = 'table';
 let chart = null;
 
 // Constants
+// Use the full path to avoid CORS issues when running locally
 const CSV_PATH = './Erank_Raw_Data/Keyword_Tool - Top Listings (1).csv';
 const NUMERIC_COLUMNS = ['Listing Age (Days)', 'Total Views', 'Daily Views', 'Est. Sales', 'Hearts'];
 const CURRENCY_COLUMNS = ['Price', 'Est. Revenue'];
 
 // Initialize the dashboard when document is ready (jQuery ready function)
 $(document).ready(function() {
-    // Event listeners
-    $('#csv-file').on('change', handleFileUpload);
+    // File upload event listeners
+    $('#csv-file-upload').on('change', handleFileUpload);
+    $('#use-sample-data').on('click', loadSampleData);
+    
+    // Drag and drop functionality
+    const dropArea = $('.upload-area');
+    
+    // Prevent default behaviors for drag events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.on(eventName, preventDefaults);
+    });
+    
+    // Highlight drop area when dragging over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.on(eventName, () => {
+            dropArea.addClass('highlight');
+        });
+    });
+    
+    // Remove highlight when dragging leaves drop area
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.on(eventName, () => {
+            dropArea.removeClass('highlight');
+        });
+    });
+    
+    // Handle file drop
+    dropArea.on('drop', handleDrop);
+    
+    // Filter form events
     $('#filter-form').on('submit', function(e) {
         e.preventDefault();
         applyFilters();
@@ -40,39 +69,229 @@ $(document).ready(function() {
     $('#download-csv').on('click', exportCSV);
     $('#download-image').on('click', exportImage);
     
-    // Load the default data
-    loadDefaultData();
+    // Dark mode toggle
+    initDarkMode();
+    $('#dark-mode-toggle').on('click', toggleDarkMode);
 });
 
 /**
- * Loads data from the default CSV file
+ * Prevent default behavior for events
+ */
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+/**
+ * Handle file drop event
+ */
+function handleDrop(e) {
+    const dt = e.originalEvent.dataTransfer;
+    const files = dt.files;
+    
+    if (files.length) {
+        const file = files[0];
+        if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+            $('#csv-file-upload')[0].files = files;
+            handleFileUpload({ target: { files: files } });
+        } else {
+            alert('Please upload a CSV file');
+        }
+    }
+}
+
+/**
+ * Loads data from the default CSV file - uses a synchronous request to work with local files
  */
 function loadDefaultData() {
     showLoadingState();
-    Papa.parse(CSV_PATH, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        dynamicTyping: function(field) {
-            // Apply dynamic typing only to numeric fields
-            if (NUMERIC_COLUMNS.includes(field)) {
-                return true;
-            }
-            // Handle currency fields separately
-            if (CURRENCY_COLUMNS.includes(field)) {
-                return false; // We'll process these manually
-            }
-            return false;
-        },
-        complete: function(results) {
+    
+    try {
+        // Use synchronous XMLHttpRequest (works with local files in some browsers)
+        const request = new XMLHttpRequest();
+        request.open('GET', CSV_PATH, false);  // 'false' makes the request synchronous
+        request.send(null);
+        
+        if (request.status === 200 || request.status === 0) { // Status 0 is used for local files
+            const csvData = request.responseText;
+            const results = Papa.parse(csvData, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: function(field) {
+                    if (NUMERIC_COLUMNS.includes(field)) {
+                        return true;
+                    }
+                    if (CURRENCY_COLUMNS.includes(field)) {
+                        return false;
+                    }
+                    return false;
+                }
+            });
+            
+            // Update the data source display
+            const fileName = CSV_PATH.split('/').pop();
+            $('#data-source-name').text(fileName);
+            
+            // Process the data
             processData(results.data);
             showDataLoadedState();
-        },
-        error: function(error) {
-            console.error('Error parsing CSV:', error);
-            alert('Error loading data. Please check the console for details.');
+            return;
         }
+    } catch (error) {
+        console.error('Error loading CSV via XHR:', error);
+    }
+    
+    // If we got here, loading failed, so use sample data
+    console.log('Using sample data instead');
+    loadSampleData();
+}
+
+/**
+ * Loads data from a specified CSV URL - Promise-based approach
+ * @param {string} url - The URL of the CSV file to load
+ * @returns {Promise} - A promise that resolves with the parsed data
+ */
+function loadDataFromUrl(url) {
+    return new Promise((resolve, reject) => {
+        Papa.parse(url, {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: function(field) {
+                // Apply dynamic typing only to numeric fields
+                if (NUMERIC_COLUMNS.includes(field)) {
+                    return true;
+                }
+                // Handle currency fields separately
+                if (CURRENCY_COLUMNS.includes(field)) {
+                    return false; // We'll process these manually
+                }
+                return false;
+            },
+            complete: (results) => {
+                resolve(results.data);
+            },
+            error: (error) => {
+                reject(error);
+            }
+        });
     });
+}
+
+/**
+ * Load sample data when user clicks the sample data button or when CSV loading fails
+ */
+function loadSampleData() {
+    // Hide upload container, show loading spinner
+    $('#upload-container').hide();
+    $('#loading-message').show();
+    $('#data-source-name').text('Sample Data');
+    
+    const sampleData = [
+        {
+            'Shop / Listing': 'VelfCreationsDigital:7 Encouraging Keychains Glowforge Bundle SVG, AI File\nacrylic, acrylic earring, digital, engraving, design, laser, glowforge, svg, ai, illustrator, earring, for her, gift',
+            'Listing Age (Days)': 1140,
+            'Total Views': 868,
+            'Daily Views': 0.8,
+            'Est. Sales': 44,
+            'Price': 4.99,
+            'Est. Revenue': 220,
+            'Hearts': 139
+        },
+        {
+            'Shop / Listing': 'DuglyGraphics:Vector TEXAS SLAM, AI, eps, pdf, png, svg, dxf, jpg Image Graphic Digital Download Artwork, stylized, graphical tail, discount coupons\nai vector sea animal, ocean reef fish eps, tuna red fish draw, pdf shark silhouette, water animalia art, texas slam image, svg swimm lovers, fish fins drawings, funny fin picture, dxf png jpg print, printable swimmeret, fun cutting images, texas slam fishing',
+            'Listing Age (Days)': 1926,
+            'Total Views': 3983,
+            'Daily Views': 2.1,
+            'Est. Sales': 205,
+            'Price': 3.25,
+            'Est. Revenue': 666,
+            'Hearts': 224
+        },
+        {
+            'Shop / Listing': 'GrowthLabs:New Generate a complete eBook with AI, step-by-step Masterclass with videos, PLR and MRR Resell Rights, Ai Ebook Generator\nchatgpt prompts, ai prompts, chat gpt prompts, digital download, prompt guide, midjourney prompts, digital products, ai art, master resell rights, plr digital products, plr planner, digital art, sell on etsy',
+            'Listing Age (Days)': 147,
+            'Total Views': 815,
+            'Daily Views': 5.5,
+            'Est. Sales': 18,
+            'Price': 17.06,
+            'Est. Revenue': 307,
+            'Hearts': 69
+        },
+        {
+            'Shop / Listing': 'PaintboxprintablesCo:Cute KID Cartoon AI Art Prompt Guide[14 Pgs]5 prompts 15 (Example) images/Prompt/Canva prompts/Cartoon/Kid Prompts for Magic Media in Canva\nai prompts, canva prompts, AI images, Ai Christmas Prompts, Magic Media Prompts, canva image prompts, Cute Puppies, Cute Puppy Images, Cute Puppy Prompts, Puppy prompts AI, Cute Puppy, Prompts for AI, Magic Media Prompt',
+            'Listing Age (Days)': 514,
+            'Total Views': 85,
+            'Daily Views': 0.2,
+            'Est. Sales': 2,
+            'Price': 5.31,
+            'Est. Revenue': 11,
+            'Hearts': 3
+        },
+        {
+            'Shop / Listing': 'Dreamycraftershop:AI Art Prompts, Prompt for small Black businesswomen, Mom & Baby, Guidebook, Creative, Mother\'s Day, Chatgpt\nDall-e, Chat GPT Prompts, Cli part, Chat GPT, Ai Prompt, Promp t, daughter, birthday, gift for, Art Inspiration, black girl, African American',
+            'Listing Age (Days)': 368,
+            'Total Views': 25,
+            'Daily Views': 0.1,
+            'Est. Sales': 0,
+            'Price': 8.99,
+            'Est. Revenue': 0,
+            'Hearts': 0
+        }
+    ];
+    
+    // Add more sample items to make the data more interesting
+    // This is just for testing the dashboard features
+    const additionalSamples = [];
+    
+    // Add some newer items with high daily views (trending)
+    for (let i = 0; i < 15; i++) {
+        additionalSamples.push({
+            'Shop / Listing': `TrendingShop${i}:AI Generated Artwork Bundle ${i} - Multiple Styles and Formats\ndigital download, printable wall art, home decor, ai art, digital art, wall prints, poster prints, minimalist art, modern art`,
+            'Listing Age (Days)': Math.floor(Math.random() * 30) + 1, // 1-30 days old
+            'Total Views': Math.floor(Math.random() * 500) + 100, // 100-600 views
+            'Daily Views': Math.floor(Math.random() * 40) + 10, // 10-50 daily views
+            'Est. Sales': Math.floor(Math.random() * 10) + 1,
+            'Price': (Math.random() * 15 + 5).toFixed(2), // $5-$20 price
+            'Est. Revenue': Math.floor(Math.random() * 200) + 50,
+            'Hearts': Math.floor(Math.random() * 50) + 10
+        });
+    }
+    
+    // Add some older items with consistent performance (evergreen)
+    for (let i = 0; i < 15; i++) {
+        additionalSamples.push({
+            'Shop / Listing': `EvergreenShop${i}:Printable Planner Template ${i} - Yearly, Monthly, Weekly Pages\ndigital planner, printable planner, planner template, digital download, productivity, organization, daily planner, to do list`,
+            'Listing Age (Days)': Math.floor(Math.random() * 300) + 200, // 200-500 days old
+            'Total Views': Math.floor(Math.random() * 2000) + 1000, // 1000-3000 views
+            'Daily Views': Math.floor(Math.random() * 5) + 2, // 2-7 daily views
+            'Est. Sales': Math.floor(Math.random() * 50) + 20,
+            'Price': (Math.random() * 10 + 3).toFixed(2), // $3-$13 price
+            'Est. Revenue': Math.floor(Math.random() * 500) + 100,
+            'Hearts': Math.floor(Math.random() * 100) + 50
+        });
+    }
+    
+    // Add some medium-aged listings with varying performance
+    for (let i = 0; i < 20; i++) {
+        additionalSamples.push({
+            'Shop / Listing': `MidRangeShop${i}:Digital ${i < 10 ? 'Pattern' : 'Template'} for ${i < 10 ? 'Crafting' : 'Business'} - Multiple Formats\ndigital download, ${i < 10 ? 'craft pattern, sewing pattern, crochet pattern' : 'business template, invoice template, social media template'}, pdf, printable, instant download`,
+            'Listing Age (Days)': Math.floor(Math.random() * 150) + 50, // 50-200 days old
+            'Total Views': Math.floor(Math.random() * 800) + 200, // 200-1000 views
+            'Daily Views': (Math.random() * 8 + 1).toFixed(1), // 1-9 daily views
+            'Est. Sales': Math.floor(Math.random() * 20) + 5,
+            'Price': (Math.random() * 12 + 4).toFixed(2), // $4-$16 price
+            'Est. Revenue': Math.floor(Math.random() * 300) + 80,
+            'Hearts': Math.floor(Math.random() * 70) + 20
+        });
+    }
+    
+    // Combine all sample data
+    const fullSampleData = [...sampleData, ...additionalSamples];
+    
+    // Process the sample data
+    processData(fullSampleData);
+    showDataLoadedState();
 }
 
 /**
@@ -81,9 +300,34 @@ function loadDefaultData() {
 function handleFileUpload(e) {
     const file = e.target.files[0];
     if (file) {
-        showLoadingState();
+        // Hide upload container, show loading spinner
+        $('#upload-container').hide();
+        $('#loading-message').show();
         $('#data-source-name').text(file.name);
         
+        // Parse file using a promise-based approach
+        parseFile(file)
+            .then(data => {
+                processData(data);
+                showDataLoadedState();
+            })
+            .catch(error => {
+                console.error('Error parsing CSV:', error);
+                alert('Error loading data. Please check the console for details.');
+                // Show upload container again if there's an error
+                $('#loading-message').hide();
+                $('#upload-container').show();
+            });
+    }
+}
+
+/**
+ * Parse a CSV file - Promise-based approach
+ * @param {File} file - The file to parse
+ * @returns {Promise} - A promise that resolves with the parsed data
+ */
+function parseFile(file) {
+    return new Promise((resolve, reject) => {
         Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
@@ -96,16 +340,14 @@ function handleFileUpload(e) {
                 }
                 return false;
             },
-            complete: function(results) {
-                processData(results.data);
-                showDataLoadedState();
+            complete: (results) => {
+                resolve(results.data);
             },
-            error: function(error) {
-                console.error('Error parsing CSV:', error);
-                alert('Error loading data. Please check the console for details.');
+            error: (error) => {
+                reject(error);
             }
         });
-    }
+    });
 }
 
 /**
@@ -138,6 +380,27 @@ function processData(data) {
         return cleanedItem;
     });
     
+    // Calculate derived metrics for each listing
+    rawData.forEach(item => {
+        // Calculate daily views if not already present
+        const listingAge = parseFloat(item['Listing Age (Days)']) || 1; // Avoid division by zero
+        const totalViews = parseFloat(item['Total Views']) || 0;
+        item['Daily Views'] = parseFloat((totalViews / listingAge).toFixed(2));
+        
+        // Calculate daily hearts for engagement rate
+        const hearts = parseFloat(item['Hearts']) || 0;
+        item['Daily Hearts'] = parseFloat((hearts / listingAge).toFixed(2));
+        
+        // Calculate engagement rate (hearts per 100 views)
+        const views = parseFloat(item['Total Views']) || 1; // Avoid division by zero
+        item['Engagement Rate'] = parseFloat(((hearts / views) * 100).toFixed(2));
+        
+        // Calculate listing freshness score (newer listings get higher scores)
+        // Using exponential decay formula: 100 * e^(-age/180)
+        // This gives newer listings higher scores that decay over time
+        item['Freshness Score'] = parseInt((100 * Math.exp(-listingAge/180)).toFixed(0));
+    });
+    
     // Initialize with all data
     filteredData = [...rawData];
     
@@ -163,6 +426,10 @@ function applyFilters() {
     const viewsMax = parseFloat($('#views-max').val()) || Infinity;
     const heartsMin = parseFloat($('#hearts-min').val()) || 0;
     const heartsMax = parseFloat($('#hearts-max').val()) || Infinity;
+    const ageMin = parseFloat($('#age-min').val()) || 0;
+    const ageMax = parseFloat($('#age-max').val()) || Infinity;
+    const dailyViewsMin = parseFloat($('#daily-views-min').val()) || 0;
+    const dailyViewsMax = parseFloat($('#daily-views-max').val()) || Infinity;
     
     const shopSearch = $('#shop-search').val().toLowerCase().trim();
     const listingSearch = $('#listing-search').val().toLowerCase().trim();
@@ -184,6 +451,12 @@ function applyFilters() {
         
         // Hearts range filter
         if (item['Hearts'] < heartsMin || item['Hearts'] > heartsMax) return false;
+        
+        // Listing age filter (new)
+        if (item['Listing Age (Days)'] < ageMin || item['Listing Age (Days)'] > ageMax) return false;
+        
+        // Daily views filter (new)
+        if (item['Daily Views'] < dailyViewsMin || item['Daily Views'] > dailyViewsMax) return false;
         
         // Text search filters
         const shopListing = item['Shop / Listing'] || '';
@@ -390,47 +663,144 @@ function updateResultsOverview() {
  * Render data as table view with pagination
  */
 function renderTableView() {
-    const $tableBody = $('#results-table-body');
-    $tableBody.empty();
+    const tableContainer = $('#table-view');
+    const tableHead = $('#data-table thead');
+    const tableBody = $('#results-table-body');
     
-    if (filteredData.length === 0) {
-        const noDataRow = `<tr><td colspan="7" class="text-center">No data matching the current filters</td></tr>`;
-        $tableBody.html(noDataRow);
-        updatePagination();
+    // Clear existing content
+    tableBody.empty();
+    
+    // Create sortable table headers if they don't exist yet
+    if (!window.tableSortInitialized) {
+        // Define columns that should be sortable
+        const columns = [
+            { field: 'Shop / Listing', label: 'Product', sortable: true },
+            { field: 'Listing Age (Days)', label: 'Age (Days)', sortable: true },
+            { field: 'Total Views', label: 'Views', sortable: true },
+            { field: 'Daily Views', label: 'Daily Views', sortable: true },
+            { field: 'Est. Sales', label: 'Sales', sortable: true },
+            { field: 'Price', label: 'Price', sortable: true },
+            { field: 'Est. Revenue', label: 'Revenue', sortable: true },
+            { field: 'Hearts', label: 'Hearts', sortable: true }
+        ];
+        
+        // Create header row with sort controls
+        const headerRow = $('<tr></tr>');
+        columns.forEach(column => {
+            const th = $(`<th ${column.sortable ? 'class="sortable"' : ''}>${column.label}</th>`);
+            
+            if (column.sortable) {
+                // Add sort indicators and click handler
+                th.append('<span class="sort-indicator ml-1">⇅</span>');
+                th.data('field', column.field);
+                
+                th.on('click', function() {
+                    const field = $(this).data('field');
+                    const currentSort = $(this).data('sort') || 'none';
+                    
+                    // Clear all other sort indicators
+                    $('.sortable').removeClass('sort-asc sort-desc').data('sort', 'none')
+                        .find('.sort-indicator').html('⇅');
+                    
+                    // Set new sort direction
+                    let newSort = 'asc';
+                    if (currentSort === 'asc') {
+                        newSort = 'desc';
+                        $(this).addClass('sort-desc').removeClass('sort-asc')
+                            .find('.sort-indicator').html('↓');
+                    } else {
+                        $(this).addClass('sort-asc').removeClass('sort-desc')
+                            .find('.sort-indicator').html('↑');
+                    }
+                    
+                    $(this).data('sort', newSort);
+                    
+                    // Sort the data
+                    sortTableData(field, newSort);
+                });
+            }
+            
+            headerRow.append(th);
+        });
+        
+        // Replace existing header with new sortable header
+        tableHead.empty().append(headerRow);
+        window.tableSortInitialized = true;
+    }
+    
+    // Get the current page data
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pageData = filteredData.slice(start, end);
+    
+    // No data message
+    if (pageData.length === 0) {
+        tableBody.html('<tr><td colspan="8" class="text-center">No results found. Try adjusting your filters.</td></tr>');
         return;
     }
     
-    // Calculate pagination
-    const start = (currentPage - 1) * itemsPerPage;
-    const end = Math.min(start + itemsPerPage, filteredData.length);
-    const pageData = filteredData.slice(start, end);
-    
-    // Create table rows
-    const rows = pageData.map(item => {
-        return `<tr>
-            <td>${item['Shop / Listing'] || 'N/A'}</td>
-            <td class="text-end">${item['Listing Age (Days)']?.toLocaleString() || '0'}</td>
-            <td class="text-end">${item['Total Views']?.toLocaleString() || '0'}</td>
-            <td class="text-end">${item['Daily Views']?.toLocaleString() || '0'}</td>
-            <td class="text-end">${item['Est. Sales']?.toLocaleString() || '0'}</td>
-            <td class="text-end">$${item['Price']?.toFixed(2) || '0.00'}</td>
-            <td class="text-end">$${item['Est. Revenue']?.toLocaleString() || '0'}</td>
-            <td class="text-end">${item['Hearts']?.toLocaleString() || '0'}</td>
-        </tr>`;
-    }).join('');
-    
-    // Add to table
-    $tableBody.html(rows);
-    
-    // Update pagination
-    updatePagination();
-    
-    // Add row hover effect
-    $('.table tbody tr').on('mouseenter', function() {
-        $(this).addClass('highlight');
-    }).on('mouseleave', function() {
-        $(this).removeClass('highlight');
+    // Render data rows with alternating backgrounds and black text
+    pageData.forEach((item, index) => {
+        const backgroundColor = index % 2 === 0 ? '#ffffff' : '#f5f5f5';
+        const row = `
+            <tr class="data-row" style="background-color: ${backgroundColor} !important;">
+                <td style="color: black !important;">${item['Shop / Listing'] || ''}</td>
+                <td style="color: black !important;">${item['Listing Age (Days)'] || 0}</td>
+                <td style="color: black !important;">${item['Total Views'] || 0}</td>
+                <td style="color: black !important;">${parseFloat(item['Daily Views'] || 0).toFixed(1)}</td>
+                <td style="color: black !important;">${item['Est. Sales'] || 0}</td>
+                <td style="color: black !important;">$${parseFloat(item['Price'] || 0).toFixed(2)}</td>
+                <td style="color: black !important;">$${parseFloat(item['Est. Revenue'] || 0).toFixed(2)}</td>
+                <td style="color: black !important;">${item['Hearts'] || 0}</td>
+            </tr>
+        `;
+        tableBody.append(row);
     });
+    
+    // Show table view and update pagination
+    tableContainer.show();
+    updatePagination();
+}
+
+/**
+ * Sort table data by field and direction
+ */
+function sortTableData(field, direction) {
+    // Create a copy of the filtered data to sort
+    const sortedData = [...filteredData];
+    
+    // Sort the data
+    sortedData.sort((a, b) => {
+        let aValue = a[field];
+        let bValue = b[field];
+        
+        // Special handling for the Shop / Listing field
+        if (field === 'Shop / Listing') {
+            // Extract just the product name part for sorting
+            aValue = (aValue || '').toString().split('\n')[0] || '';
+            bValue = (bValue || '').toString().split('\n')[0] || '';
+        }
+        
+        // Handle numeric values
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+            return direction === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+        
+        // Handle string values
+        aValue = (aValue || '').toString().toLowerCase();
+        bValue = (bValue || '').toString().toLowerCase();
+        
+        if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+    
+    // Update the filtered data with the sorted data
+    filteredData = sortedData;
+    
+    // Reset pagination to first page and re-render
+    currentPage = 1;
+    renderTableView();
 }
 
 /**
@@ -537,18 +907,35 @@ function showLoadingState() {
  * Show data loaded state of the dashboard
  */
 function showDataLoadedState() {
-    // Hide loading message, show success message
+    // First show success message briefly
     $('#loading-message').hide();
     $('#data-loaded').show();
     
-    // Show dashboard content
-    $('.dashboard-content').fadeIn(800);
-    
-    // Enable filter controls
-    $('#filter-form :input').prop('disabled', false);
-    $('.btn-viz').prop('disabled', false);
+    // After a short delay, replace loading section with results overview
+    setTimeout(function() {
+        // Hide loading section, show results overview section
+        $('#loading-section').fadeOut(400, function() {
+            $('#results-overview-section').fadeIn(600);
+        });
+        
+        // Show dashboard content
+        $('.dashboard-content').fadeIn(800);
+        
+        // Enable filter controls
+        $('#filter-form').find('input, select, button').prop('disabled', false);
+        $('.btn-viz').prop('disabled', false);
+        
+        // Generate insights and analytics
+        generateProductInsights();
+        generateProductTrendChart();
+        generateFeatureRecommendations();
+        generateMarketingStrategies();
+        generateKeywordPerformanceChart();
+        
+        // Generate age-based analytics for trending and evergreen products
+        generateAgeBasedAnalytics();
+    }, 1500);
 }
-
 /**
  * Update the chart visualization
  */
@@ -1214,4 +1601,468 @@ function exportImage() {
             hideAfter: 3000
         });
     }
+}
+
+/**
+ * Generate product creation insights based on the filtered data
+ */
+function generateProductInsights() {
+    if (filteredData.length === 0) {
+        $('#product-opportunities').html('<li class="list-group-item">No data available for insights</li>');
+        return;
+    }
+    
+    // Analyze the data to find patterns and opportunities
+    const priceRanges = {
+        'budget': { min: 0, max: 15, count: 0, revenue: 0, views: 0 },
+        'mid-range': { min: 15, max: 50, count: 0, revenue: 0, views: 0 },
+        'premium': { min: 50, max: 100, count: 0, revenue: 0, views: 0 },
+        'luxury': { min: 100, max: Infinity, count: 0, revenue: 0, views: 0 }
+    };
+    
+    // Categorize products and calculate metrics
+    filteredData.forEach(item => {
+        const price = item['Price'] || 0;
+        const revenue = item['Est. Revenue'] || 0;
+        const views = item['Total Views'] || 0;
+        const hearts = item['Hearts'] || 0;
+        const listingAge = item['Listing Age (Days)'] || 0;
+        const dailyViews = item['Daily Views'] || 0;
+        
+        // Determine price category
+        let category;
+        if (price < priceRanges.budget.max) {
+            category = 'budget';
+        } else if (price < priceRanges['mid-range'].max) {
+            category = 'mid-range';
+        } else if (price < priceRanges.premium.max) {
+            category = 'premium';
+        } else {
+            category = 'luxury';
+        }
+        
+        // Update category stats
+        priceRanges[category].count++;
+        priceRanges[category].revenue += revenue;
+        priceRanges[category].views += views;
+    });
+    
+    // Calculate average revenue per product and view-to-revenue ratio for each category
+    Object.keys(priceRanges).forEach(category => {
+        const stats = priceRanges[category];
+        stats.avgRevenue = stats.count > 0 ? stats.revenue / stats.count : 0;
+        stats.viewToRevenueRatio = stats.views > 0 ? stats.revenue / stats.views : 0;
+    });
+    
+    // Sort categories by average revenue and identify top performers
+    const sortedCategories = Object.keys(priceRanges)
+        .filter(category => priceRanges[category].count > 0)
+        .sort((a, b) => priceRanges[b].avgRevenue - priceRanges[a].avgRevenue);
+    
+    // Generate insights based on the analysis
+    let opportunities = '';
+    
+    if (sortedCategories.length > 0) {
+        const topCategory = sortedCategories[0];
+        const topCategoryFormatted = topCategory.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        
+        opportunities += `<li class="list-group-item">
+            <span><strong>${topCategoryFormatted}</strong> products ($${priceRanges[topCategory].min}-$${priceRanges[topCategory].max === Infinity ? '100+' : priceRanges[topCategory].max}) have the highest average revenue ($${priceRanges[topCategory].avgRevenue.toFixed(2)})</span>
+        </li>`;
+        
+        // Find the category with best views-to-revenue conversion
+        const bestConversion = Object.keys(priceRanges)
+            .filter(category => priceRanges[category].count > 0 && priceRanges[category].views > 0)
+            .sort((a, b) => priceRanges[b].viewToRevenueRatio - priceRanges[a].viewToRevenueRatio)[0];
+        
+        if (bestConversion) {
+            const bestConversionFormatted = bestConversion.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            opportunities += `<li class="list-group-item">
+                <span><strong>${bestConversionFormatted}</strong> products have the best view-to-revenue conversion rate</span>
+            </li>`;
+        }
+        
+        // Add general product creation recommendation
+        opportunities += `<li class="list-group-item">
+            <span>Consider creating more products in the <strong>${topCategoryFormatted}</strong> price range to maximize revenue</span>
+        </li>`;
+    } else {
+        opportunities = '<li class="list-group-item">Insufficient data for product insights</li>';
+    }
+    
+    // Update the product opportunities list
+    $('#product-opportunities').html(opportunities);
+    
+    // Generate product trend chart
+    generateProductTrendChart();
+    
+    // Generate feature recommendations
+    generateFeatureRecommendations();
+}
+
+/**
+ * Generate a chart showing product trends
+ */
+function generateProductTrendChart() {
+    const ctx = document.getElementById('product-trends-chart').getContext('2d');
+    
+    // Calculate product metrics by price range
+    const priceRanges = [
+        { min: 0, max: 10, label: '$0-$10' },
+        { min: 10, max: 25, label: '$10-$25' },
+        { min: 25, max: 50, label: '$25-$50' },
+        { min: 50, max: 100, label: '$50-$100' },
+        { min: 100, max: Infinity, label: '$100+' }
+    ];
+    
+    const metrics = {
+        views: new Array(priceRanges.length).fill(0),
+        hearts: new Array(priceRanges.length).fill(0),
+        sales: new Array(priceRanges.length).fill(0),
+        items: new Array(priceRanges.length).fill(0)
+    };
+    
+    // Process data
+    filteredData.forEach(item => {
+        const price = item['Price'] || 0;
+        const views = item['Total Views'] || 0;
+        const hearts = item['Hearts'] || 0;
+        const sales = item['Est. Sales'] || 0;
+        
+        // Find applicable price range
+        const rangeIndex = priceRanges.findIndex(range => price >= range.min && price < range.max);
+        
+        if (rangeIndex !== -1) {
+            metrics.views[rangeIndex] += views;
+            metrics.hearts[rangeIndex] += hearts;
+            metrics.sales[rangeIndex] += sales;
+            metrics.items[rangeIndex]++;
+        }
+    });
+    
+    // Calculate averages for each range (to normalize data)
+    const avgViews = metrics.items.map((count, i) => count > 0 ? metrics.views[i] / count : 0);
+    const avgHearts = metrics.items.map((count, i) => count > 0 ? metrics.hearts[i] / count : 0);
+    const avgSales = metrics.items.map((count, i) => count > 0 ? metrics.sales[i] / count : 0);
+    
+    // Create chart
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: priceRanges.map(range => range.label),
+            datasets: [
+                {
+                    label: 'Avg. Views',
+                    data: avgViews,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Avg. Hearts',
+                    data: avgHearts,
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Avg. Sales',
+                    data: avgSales,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Views & Hearts'
+                    }
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Sales'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Product Performance by Price Range'
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Generate feature recommendations for products
+ */
+function generateFeatureRecommendations() {
+    // Simulating feature analysis from product data
+    // In a real app, this would be based on deeper analysis of product attributes and performance
+    
+    const features = [
+        {
+            name: 'Customization Options',
+            impact: 'High',
+            adoption: '68%',
+            competitiveness: 'Medium'
+        },
+        {
+            name: 'Multiple Variations',
+            impact: 'Medium',
+            adoption: '82%',
+            competitiveness: 'High'
+        },
+        {
+            name: 'Digital Downloads',
+            impact: 'High',
+            adoption: '45%',
+            competitiveness: 'Low'
+        },
+        {
+            name: 'Bundle Offers',
+            impact: 'Medium',
+            adoption: '37%',
+            competitiveness: 'Medium'
+        },
+        {
+            name: 'Eco-Friendly Materials',
+            impact: 'Medium',
+            adoption: '29%',
+            competitiveness: 'Medium'
+        }
+    ];
+    
+    // Create table rows
+    let tableRows = '';
+    features.forEach(feature => {
+        // Determine impact class
+        let impactClass = 'text-secondary';
+        if (feature.impact === 'High') impactClass = 'text-success';
+        else if (feature.impact === 'Medium') impactClass = 'text-primary';
+        
+        // Determine competitiveness class
+        let compClass = 'text-secondary';
+        if (feature.competitiveness === 'Low') compClass = 'text-success';
+        else if (feature.competitiveness === 'Medium') compClass = 'text-primary';
+        else if (feature.competitiveness === 'High') compClass = 'text-danger';
+        
+        tableRows += `
+            <tr>
+                <td>${feature.name}</td>
+                <td class="${impactClass}">${feature.impact}</td>
+                <td>${feature.adoption}</td>
+                <td class="${compClass}">${feature.competitiveness}</td>
+            </tr>
+        `;
+    });
+    
+    // Update table
+    $('#features-table-body').html(tableRows);
+}
+
+/**
+ * Generate marketing strategies based on the filtered data
+ */
+function generateMarketingStrategies() {
+    if (filteredData.length === 0) {
+        $('#traffic-recommendations').html('<li class="list-group-item">No data available for marketing strategies</li>');
+        return;
+    }
+    
+    // Generate keyword performance chart
+    generateKeywordPerformanceChart();
+    
+    // Generate platform-specific marketing tips
+    generateMarketingTips();
+    
+    // Analyze data to identify high-performing products
+    const topPerformers = [...filteredData]
+        .sort((a, b) => (b['Est. Revenue'] || 0) - (a['Est. Revenue'] || 0))
+        .slice(0, 5);
+    
+    // Extract product names/titles
+    const topProductNames = topPerformers.map(item => {
+        const fullTitle = item['Shop / Listing'] || '';
+        // Extract product name (assuming it's after the shop name and colon)
+        const titleParts = fullTitle.split(':');
+        return titleParts.length > 1 ? titleParts[1].trim().split(',')[0] : fullTitle;
+    });
+    
+    // Generate traffic recommendations
+    let recommendations = '';
+    
+    // Top product promotion recommendation
+    if (topProductNames.length > 0) {
+        recommendations += `
+            <li class="list-group-item">
+                <strong>Promote Top Performers:</strong> Focus advertising on your best-selling items like "${topProductNames[0]}"
+            </li>
+        `;
+    }
+    
+    // Add general marketing recommendations
+    recommendations += `
+        <li class="list-group-item">
+            <strong>Pinterest Marketing:</strong> Create pinnable images featuring your product in use
+        </li>
+        <li class="list-group-item">
+            <strong>Instagram Strategy:</strong> Post process videos and behind-the-scenes content
+        </li>
+        <li class="list-group-item">
+            <strong>SEO Improvement:</strong> Optimize titles and tags with high-traffic keywords
+        </li>
+    `;
+    
+    // Update traffic recommendations list
+    $('#traffic-recommendations').html(recommendations);
+    
+    // Add Etsy-specific optimization tips
+    $('#etsy-tips').html(`
+        <ol class="mb-0">
+            <li>Use all 13 available tags with relevant keywords</li>
+            <li>Include your most important keywords in the first 40 characters of your title</li>
+            <li>Add at least 5 high-quality photos showing your product from multiple angles</li>
+            <li>Respond to customer messages within 24 hours to improve shop score</li>
+            <li>Encourage reviews by including a thank you note with orders</li>
+        </ol>
+    `);
+    
+    // Add social media strategy tips
+    $('#social-tips').html(`
+        <ol class="mb-0">
+            <li>Create a consistent posting schedule (3-5 times per week)</li>
+            <li>Use trending hashtags relevant to your products</li>
+            <li>Engage with potential customers by responding to comments</li>
+            <li>Collaborate with micro-influencers in your niche</li>
+            <li>Share user-generated content featuring your products</li>
+        </ol>
+    `);
+    
+    // Add email marketing plan tips
+    $('#email-tips').html(`
+        <ol class="mb-0">
+            <li>Create a welcome sequence for new subscribers with a discount</li>
+            <li>Send monthly newsletters featuring new products and shop updates</li>
+            <li>Implement abandoned cart emails to recover lost sales</li>
+            <li>Segment your email list based on purchase history</li>
+            <li>Include lifestyle imagery and customer testimonials in emails</li>
+        </ol>
+    `);
+}
+
+/**
+ * Generate a chart showing keyword performance
+ */
+function generateKeywordPerformanceChart() {
+    const ctx = document.getElementById('keyword-performance-chart').getContext('2d');
+    
+    // For this demo, we'll simulate keyword performance data
+    // In a real application, this would be extracted from the product data
+    const keywords = ['digital download', 'personalized', 'handmade', 'custom', 'printable'];
+    const searchVolume = [850, 1200, 950, 1500, 780];
+    const competition = [0.65, 0.85, 0.55, 0.75, 0.45];
+    const conversionRate = [2.8, 3.5, 1.9, 4.2, 3.1];
+    
+    // Create chart
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: keywords,
+            datasets: [
+                {
+                    label: 'Search Volume (hundreds)',
+                    data: searchVolume,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    tension: 0.3,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Competition (0-1)',
+                    data: competition,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.3,
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'Conversion Rate (%)',
+                    data: conversionRate,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.3,
+                    yAxisID: 'y2'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Search Volume'
+                    }
+                },
+                y1: {
+                    beginAtZero: true,
+                    max: 1,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Competition'
+                    }
+                },
+                y2: {
+                    beginAtZero: true,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                    title: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Keyword Performance Analysis'
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Generate platform-specific marketing tips
+ */
+function generateMarketingTips() {
+    // This function exists as a placeholder - the actual content is generated
+    // directly in the generateMarketingStrategies function for simplicity
 }

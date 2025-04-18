@@ -15,39 +15,88 @@
 </head>
 <body>
     <div class="container-fluid">
-        <header class="dashboard-header">
-            <div class="row align-items-center py-3">
-                <div class="col-md-6">
-                    <h1>Erank Advanced Analytics Dashboard</h1>
-                    <p class="data-source">Data Source: <span id="data-source-name">Keyword_Tool - Top Listings (1).csv</span></p>
-                </div>
-                <div class="col-md-6 text-end">
-                    <div class="file-upload">
-                        <label for="csv-file" class="btn btn-primary">Upload Different CSV</label>
-                        <input type="file" id="csv-file" accept=".csv" style="display: none;">
-                    </div>
-                    <a href="index.html" class="btn btn-outline-secondary ms-2">Back to Main Dashboard</a>
-                </div>
-            </div>
-        </header>
-
-        <!-- Loading Section -->
-        <div class="row mb-4" id="loading-section">
-            <div class="col-12">
+        <!-- Combined header and results overview in one floating card -->
+        <div class="row mb-4" id="top-section">
+            <!-- Upload Panel (shown initially) -->
+            <div class="col-12" id="loading-section">
                 <div class="card">
                     <div class="card-header dashboard-section-header">
-                        <h2>Data Loading</h2>
+                        <h2>Upload ERank Data</h2>
                     </div>
                     <div class="card-body">
-                        <div id="loading-message">
+                        <div id="upload-container" class="text-center py-4">
+                            <div class="mb-4">
+                                <img src="https://cdn-icons-png.flaticon.com/512/4725/4725970.png" alt="Upload CSV" style="width: 80px; height: 80px;">
+                                <h3 class="mt-3">Upload Your ERank CSV File</h3>
+                                <p class="text-muted">Upload your ERank CSV export to analyze your Etsy shop performance</p>
+                            </div>
+                            
+                            <div class="upload-area p-4 mb-3 mx-auto" style="max-width: 500px; border: 2px dashed #ccc; border-radius: 8px;">
+                                <input type="file" id="csv-file-upload" accept=".csv" style="display: none;">
+                                <label for="csv-file-upload" class="btn btn-primary btn-lg">Select CSV File</label>
+                                <p class="mt-2 mb-0">or drag and drop file here</p>
+                            </div>
+                            
+                            <p>Don't have a CSV file? <button id="use-sample-data" class="btn btn-link p-0">Use sample data</button></p>
+                        </div>
+                        
+                        <div id="loading-message" style="display: none;" class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
-                            <p>Loading dashboard data...</p>
+                            <p>Processing data...</p>
                         </div>
+                        
                         <div id="data-loaded" style="display: none;">
                             <div class="alert alert-success">
                                 <p>Data successfully loaded! Use the filters below to analyze the data.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Combined header and Results Overview Panel (hidden initially, shown after data loads) -->
+            <div class="col-12" id="results-overview-section" style="display: none;">
+                <div class="card floating-card">
+                    <div class="card-header dashboard-section-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="mb-0">Erank Advanced Analytics Dashboard</h1>
+                            <p class="data-source mb-0">Data Source: <span id="data-source-name">Keyword_Tool - Top Listings (1).csv</span></p>
+                        </div>
+                        <div>
+                            <div class="file-upload d-inline-block">
+                                <label for="csv-file" class="btn btn-primary">Upload Different CSV</label>
+                                <input type="file" id="csv-file" accept=".csv" style="display: none;">
+                            </div>
+                            <a href="index.html" class="btn btn-outline-secondary ms-2">Back to Main Dashboard</a>
+                        </div>
+                    </div>
+                    <div class="card-body pt-0">
+                        <div class="row mt-3">
+                            <div class="col-md-3 mb-3">
+                                <div class="metric-card">
+                                    <h3>Total Listings</h3>
+                                    <p id="total-listings">0</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="metric-card">
+                                    <h3>Avg. Price</h3>
+                                    <p id="avg-price">$0.00</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="metric-card">
+                                    <h3>Total Est. Revenue</h3>
+                                    <p id="total-revenue">$0</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="metric-card">
+                                    <h3>Total Hearts</h3>
+                                    <p id="total-hearts">0</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -57,18 +106,18 @@
 
         <!-- Dashboard Content -->
         <div class="dashboard-content" style="display: none;">
-            <!-- Filters Section -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card floating-card filter-card">
+            <div class="row">
+                <!-- Left Sidebar for Filters (3/12) -->
+                <div class="col-md-3">
+                    <div class="card floating-card filter-card h-100">
                         <div class="card-header dashboard-section-header d-flex justify-content-between align-items-center">
                             <h2>Advanced Filters</h2>
                             <button id="toggle-filters" class="btn btn-sm btn-outline-primary">Hide Filters</button>
                         </div>
-                        <div class="card-body" id="filters-body">
+                        <div class="card-body overflow-auto" id="filters-body">
                             <form id="filter-form" class="row g-3">
                                 <!-- Numeric Range Filters -->
-                                <div class="col-md-3">
+                                <div class="col-12">
                                     <label for="price-range" class="form-label">Price Range ($)</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="price-min" placeholder="Min">
@@ -76,7 +125,7 @@
                                         <input type="number" class="form-control" id="price-max" placeholder="Max">
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-12">
                                     <label for="revenue-range" class="form-label">Est. Revenue ($)</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="revenue-min" placeholder="Min">
@@ -84,7 +133,7 @@
                                         <input type="number" class="form-control" id="revenue-max" placeholder="Max">
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-12">
                                     <label for="views-range" class="form-label">Total Views</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="views-min" placeholder="Min">
@@ -92,7 +141,7 @@
                                         <input type="number" class="form-control" id="views-max" placeholder="Max">
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-12">
                                     <label for="hearts-range" class="form-label">Hearts</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="hearts-min" placeholder="Min">
@@ -101,22 +150,40 @@
                                     </div>
                                 </div>
                                 
+                                <div class="col-12">
+                                    <label for="age-range" class="form-label">Listing Age (Days)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="age-min" placeholder="Min">
+                                        <span class="input-group-text">to</span>
+                                        <input type="number" class="form-control" id="age-max" placeholder="Max">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label for="daily-views-range" class="form-label">Daily Views</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="daily-views-min" placeholder="Min">
+                                        <span class="input-group-text">to</span>
+                                        <input type="number" class="form-control" id="daily-views-max" placeholder="Max">
+                                    </div>
+                                </div>
+                                
                                 <!-- Text Search Filters -->
-                                <div class="col-md-4">
+                                <div class="col-12">
                                     <label for="shop-search" class="form-label">Shop Name Contains</label>
-                                    <input type="text" class="form-control" id="shop-search" placeholder="Enter shop name...">
+                                    <input type="text" class="form-control" id="shop-search" placeholder="Search shop names...">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-12">
                                     <label for="listing-search" class="form-label">Listing Description Contains</label>
-                                    <input type="text" class="form-control" id="listing-search" placeholder="Enter keywords...">
+                                    <input type="text" class="form-control" id="listing-search" placeholder="Search listing descriptions...">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-12">
                                     <label for="keywords-search" class="form-label">Keywords Contains</label>
-                                    <input type="text" class="form-control" id="keywords-search" placeholder="Enter search terms...">
+                                    <input type="text" class="form-control" id="keywords-search" placeholder="Search by keywords...">
                                 </div>
                                 
                                 <!-- Sort Options -->
-                                <div class="col-md-4">
+                                <div class="col-12">
                                     <label for="sort-by" class="form-label">Sort By</label>
                                     <select class="form-select" id="sort-by">
                                         <option value="totalViews-desc">Total Views (High to Low)</option>
@@ -127,97 +194,36 @@
                                         <option value="estRevenue-asc">Est. Revenue (Low to High)</option>
                                         <option value="hearts-desc">Hearts (High to Low)</option>
                                         <option value="hearts-asc">Hearts (Low to High)</option>
-                                        <option value="listingAge-desc">Listing Age (Oldest First)</option>
-                                        <option value="listingAge-asc">Listing Age (Newest First)</option>
                                     </select>
                                 </div>
                                 
                                 <!-- Limit Results -->
-                                <div class="col-md-4">
+                                <div class="col-12">
                                     <label for="limit-results" class="form-label">Limit Results</label>
                                     <select class="form-select" id="limit-results">
-                                        <option value="25">Top 25</option>
+                                        <option value="0">All results</option>
+                                        <option value="10">Top 10</option>
                                         <option value="50">Top 50</option>
                                         <option value="100">Top 100</option>
-                                        <option value="0">All Results</option>
+                                        <option value="500">Top 500</option>
                                     </select>
                                 </div>
                                 
-                                <!-- Filter Actions -->
-                                <div class="col-md-4 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
+                                <!-- Action Buttons -->
+                                <div class="col-12 mt-4 d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">Apply Filters</button>
                                     <button type="button" id="reset-filters" class="btn btn-outline-secondary">Reset Filters</button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 </div>
-            </div>
+                
+                <!-- Right Content Area for Visualizations (9/12) -->
+                <div class="col-md-9">
 
-            <!-- Visualization Options -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card floating-card">
-                        <div class="card-header dashboard-section-header">
-                            <h2>Visualization Options</h2>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-flex flex-wrap">
-                                <button class="btn btn-viz me-2 mb-2 active" data-viz="table">Table View</button>
-                                <button class="btn btn-viz me-2 mb-2" data-viz="bar">Bar Chart</button>
-                                <button class="btn btn-viz me-2 mb-2" data-viz="scatter">Scatter Plot</button>
-                                <button class="btn btn-viz me-2 mb-2" data-viz="pie">Pie Chart</button>
-                                <button class="btn btn-viz me-2 mb-2" data-viz="bubble">Bubble Chart</button>
-                                <button class="btn btn-viz me-2 mb-2" data-viz="radar">Radar Chart</button>
-                                <button class="btn btn-viz me-2 mb-2" data-viz="heatmap">Heatmap</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Results Overview -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card floating-card">
-                        <div class="card-header dashboard-section-header">
-                            <h2>Results Overview</h2>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <div class="metric-card">
-                                        <h3>Total Listings</h3>
-                                        <p id="total-listings">0</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="metric-card">
-                                        <h3>Avg. Price</h3>
-                                        <p id="avg-price">$0.00</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="metric-card">
-                                        <h3>Total Est. Revenue</h3>
-                                        <p id="total-revenue">$0</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="metric-card">
-                                        <h3>Total Hearts</h3>
-                                        <p id="total-hearts">0</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Visualization Container -->
-            <div class="row mb-4">
-                <div class="col-12">
+                    <!-- Visualization Container -->
                     <div class="card floating-card">
                         <div class="card-header dashboard-section-header d-flex justify-content-between align-items-center">
                             <h2 id="viz-title">Data Visualization</h2>
@@ -258,7 +264,7 @@
                                 <!-- Table View (Default) -->
                                 <div id="table-view">
                                     <div class="table-responsive">
-                                        <table class="table table-striped table-hover">
+                                        <table class="table table-striped table-hover force-dark-table" id="data-table">
                                             <thead>
                                                 <tr>
                                                     <th>Shop / Listing</th>
@@ -272,7 +278,27 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="results-table-body">
-                                                <!-- Results will be inserted here -->
+                                                <!-- Sample table data for testing display -->
+                                                <tr class="data-row" style="background-color: #ffffff !important;">
+                                                    <td style="color: black !important; font-weight: 400 !important;">Sample Product 1</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">120</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">1500</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">12.5</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">25</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">$19.99</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">$499.75</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">200</td>
+                                                </tr>
+                                                <tr class="data-row" style="background-color: #f5f5f5 !important;">
+                                                    <td style="color: black !important; font-weight: 400 !important;">Sample Product 2</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">90</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">2400</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">26.7</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">40</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">$24.99</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">$999.60</td>
+                                                    <td style="color: black !important; font-weight: 400 !important;">350</td>
+                                                </tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -298,10 +324,177 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Additional Insights Sections -->
+            <div class="row mt-4">
+                <!-- Product Creation Insights -->
+                <div class="col-md-6 mb-3">
+                    <div class="card floating-card h-100">
+                        <div class="card-header dashboard-section-header">
+                            <h2>Product Creation Insights</h2>
+                        </div>
+                        <div class="card-body" id="product-insights">
+                            <div class="alert alert-info">
+                                <h5 class="mb-3">Top Product Opportunities:</h5>
+                                <ul class="list-group list-group-flush" id="product-opportunities">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Loading product insights...
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="mt-3">
+                                <h5>Product Trend Analysis</h5>
+                                <div class="trend-chart-container mt-2">
+                                    <canvas id="product-trends-chart" height="220"></canvas>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <h5>Recommended Product Features</h5>
+                                <div class="table-responsive" id="features-table-container">
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Feature</th>
+                                                <th>Impact</th>
+                                                <th>Adoption</th>
+                                                <th>Competitiveness</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="features-table-body">
+                                            <!-- Will be populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Marketing Strategies -->
+                <div class="col-md-6 mb-3">
+                    <div class="card floating-card h-100">
+                        <div class="card-header dashboard-section-header">
+                            <h2>Marketing Strategies</h2>
+                        </div>
+                        <div class="card-body" id="marketing-strategies">
+                            <div class="alert alert-info">
+                                <h5 class="mb-3">Traffic Driving Recommendations:</h5>
+                                <ul class="list-group list-group-flush" id="traffic-recommendations">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Loading marketing strategies...
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="mt-3">
+                                <h5>Keyword Performance</h5>
+                                <div class="trend-chart-container mt-2">
+                                    <canvas id="keyword-performance-chart" height="180"></canvas>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <h5>Platform-Specific Marketing Tips</h5>
+                                <div class="accordion" id="marketingAccordion">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingOne">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEtsy" aria-expanded="false" aria-controls="collapseEtsy">
+                                                Etsy Optimization
+                                            </button>
+                                        </h2>
+                                        <div id="collapseEtsy" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#marketingAccordion">
+                                            <div class="accordion-body" id="etsy-tips">
+                                                Loading Etsy-specific tips...
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingTwo">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSocial" aria-expanded="false" aria-controls="collapseSocial">
+                                                Social Media Strategy
+                                            </button>
+                                        </h2>
+                                        <div id="collapseSocial" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#marketingAccordion">
+                                            <div class="accordion-body" id="social-tips">
+                                                Loading social media tips...
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingThree">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEmail" aria-expanded="false" aria-controls="collapseEmail">
+                                                Email Marketing Plan
+                                            </button>
+                                        </h2>
+                                        <div id="collapseEmail" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#marketingAccordion">
+                                            <div class="accordion-body" id="email-tips">
+                                                Loading email marketing tips...
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Age-Based Analytics Section -->
+            <div class="col-12 mb-4">
+                <div class="card floating-card">
+                    <div class="card-header dashboard-section-header">
+                        <h2>Age-Based Analytics</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>Recently Trending Items</h4>
+                                <p class="text-muted">Items with high views per day relative to their age</p>
+                                <div class="list-group" id="trending-items-list">
+                                    <p class="text-muted">Loading trending items...</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h4>Evergreen Performers</h4>
+                                <p class="text-muted">Older listings that maintain consistent performance</p>
+                                <div class="list-group" id="evergreen-items-list">
+                                    <p class="text-muted">Loading evergreen performers...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h4>Age Performance Analysis</h4>
+                                <canvas id="age-performance-chart" style="width:100%; height:250px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Dark Mode Toggle Button -->
+    <button class="dark-mode-toggle" id="dark-mode-toggle" title="Toggle Dark Mode">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <!-- Bootstrap Bundle with Popper for the accordions -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome for icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <!-- Main Scripts -->
     <script src="js/advanced-dashboard-jquery.js"></script>
+    <!-- Age-based Analytics -->
+    <script src="js/age-based-analytics.js"></script>
+    <!-- Dark Mode -->
+    <script src="js/dark-mode.js"></script>
 </body>
 </html>
