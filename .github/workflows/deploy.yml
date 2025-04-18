@@ -29,31 +29,33 @@ jobs:
       
       - name: Set up project structure for GitHub Pages
         run: |
-          # Ensure advanced dashboard is the default landing page
-          cp Reports/advanced-dashboard.html index.html
+          # First list what's in the Reports directory
+          echo "Listing Reports directory:"
+          ls -la Reports/
           
-          # Copy original index.html as main-dashboard.html
-          cp Reports/index.html main-dashboard.html
+          # Simply copy the entire Reports directory to the root
+          # This ensures all relative paths stay intact
+          cp -r Reports/* .
           
-          # Fix links in advanced-dashboard.html to point to main-dashboard.html
-          sed -i 's/href="index.html"/href="main-dashboard.html"/g' index.html
+          # Create a simplified index.html redirect to advanced-dashboard.html
+          cat > index.html << 'EOL'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta http-equiv="refresh" content="0; url=advanced-dashboard.html" />
+            <title>Redirecting to Advanced Dashboard</title>
+          </head>
+          <body>
+            <p>If you are not redirected automatically, <a href="advanced-dashboard.html">click here</a>.</p>
+          </body>
+          </html>
+          EOL
           
-          # Ensure all supporting directories and files are copied
-          cp -r Reports/css .
-          cp -r Reports/js .
-          cp -r Reports/advanced-dashboard.html .
+          # Create a .nojekyll file to tell GitHub Pages not to use Jekyll
+          touch .nojekyll
           
-          # If there are images, copy them too
-          if [ -d Reports/images ]; then
-            cp -r Reports/images .
-          fi
-          
-          # Copy any data files needed for the sample data
-          if [ -d Reports/Erank_Raw_Data ]; then
-            cp -r Reports/Erank_Raw_Data .
-          fi
-          
-          echo "Successfully set up project structure for GitHub Pages"
+          # List what's in the root directory now
+          echo "Final root directory contents:"
           ls -la
           
       - name: Upload artifact
