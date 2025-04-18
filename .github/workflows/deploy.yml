@@ -27,58 +27,46 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
-      - name: Debug repository contents
+      - name: Build simple site for GitHub Pages
         run: |
-          echo "Repository root contents:"
-          ls -la
-          echo "
-Reports directory contents:"
-          ls -la Reports/ || echo "Reports directory not found"
-          echo "
-Advanced dashboard exists?"
-          [ -f Reports/advanced-dashboard.html ] && echo "Yes, file exists" || echo "No, file not found"
-      
-      - name: Create static GitHub Pages site
-        run: |
-          # Create simple site directory structure
-          mkdir -p site
+          # Make a fresh deploy directory
+          mkdir -p _site
           
-          # Copy everything from Reports directory to site directory if it exists
-          if [ -d Reports ]; then
-            cp -r Reports/* site/
-          fi
+          # First create a simple test page in the root
+          cp test.html _site/
           
-          # Create a direct redirect in the root index.html
-          cat > site/index.html << 'EOL'
+          # Create an index.html file
+          cat > _site/index.html << 'EOL'
           <!DOCTYPE html>
-          <html lang="en">
+          <html>
           <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="refresh" content="0; url=advanced-dashboard.html" />
             <title>Etsy Dashboard</title>
           </head>
-          <body style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif;">
-            <div style="text-align: center;">
-              <h1>Redirecting to Advanced Dashboard</h1>
-              <p>If you are not redirected automatically, <a href="advanced-dashboard.html">click here</a>.</p>
-            </div>
+          <body>
+            <h1>Etsy Analytics Dashboard</h1>
+            <p>This is the index page. Please select one of the dashboards below:</p>
+            <ul>
+              <li><a href="test.html">Test Page</a></li>
+              <li><a href="Reports/advanced-dashboard.html">Advanced Dashboard</a></li>
+            </ul>
           </body>
           </html>
           EOL
           
-          # Create .nojekyll file to prevent GitHub Pages from using Jekyll
-          touch site/.nojekyll
+          # Copy the entire Reports folder
+          cp -r Reports _site/
           
-          # Display final site contents
-          echo "
-Final site directory contents:"
-          ls -la site/
+          # Create .nojekyll file
+          touch _site/.nojekyll
+          
+          # Display the site structure
+          echo "Site structure:"
+          find _site -type f | sort
       
-      - name: Upload pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'site'
+          path: '_site'
       
       - name: Deploy to GitHub Pages
         id: deployment
