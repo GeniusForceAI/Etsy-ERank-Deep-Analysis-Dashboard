@@ -401,6 +401,53 @@ function processData(data) {
         item['Freshness Score'] = parseInt((100 * Math.exp(-listingAge/180)).toFixed(0));
     });
     
+    // Calculate percentage-based metrics after all rows are processed
+    // First calculate totals
+    const totalDailyViews = rawData.reduce((sum, item) => sum + parseFloat(item['Daily Views'] || 0), 0);
+    const totalViews = rawData.reduce((sum, item) => sum + parseFloat(item['Total Views'] || 0), 0);
+    const totalSales = rawData.reduce((sum, item) => sum + parseFloat(item['Est. Sales'] || 0), 0);
+    
+    // Then calculate percentages for each item
+    rawData.forEach(item => {
+        // Daily views percentage (what percent of all daily views this item accounts for)
+        item.percentDailyViews = totalDailyViews > 0 ? 
+            parseFloat(((parseFloat(item['Daily Views'] || 0) / totalDailyViews) * 100).toFixed(2)) : 0;
+            
+        // Total views percentage (what percent of all views this item accounts for)
+        item.percentTotalViews = totalViews > 0 ? 
+            parseFloat(((parseFloat(item['Total Views'] || 0) / totalViews) * 100).toFixed(2)) : 0;
+            
+        // Sales percentage (what percent of all sales this item accounts for)
+        item.percentSales = totalSales > 0 ? 
+            parseFloat(((parseFloat(item['Est. Sales'] || 0) / totalSales) * 100).toFixed(2)) : 0;
+            
+        // Views per sale (efficiency metric)
+        item.viewsPerSale = parseFloat(item['Est. Sales'] || 0) > 0 ? 
+            parseFloat((parseFloat(item['Total Views'] || 0) / parseFloat(item['Est. Sales'] || 0)).toFixed(2)) : 0;
+    });
+    
+    // Now categorize prices
+    // Get all prices and sort them
+    const prices = rawData.map(item => parseFloat(item['Price'] || 0)).filter(price => price > 0).sort((a, b) => a - b);
+    
+    if (prices.length > 0) {
+        // Find thresholds for price categories (33% and 66% percentiles)
+        const lowThreshold = prices[Math.floor(prices.length * 0.33)] || 0;
+        const highThreshold = prices[Math.floor(prices.length * 0.66)] || 0;
+        
+        // Categorize each listing
+        rawData.forEach(item => {
+            const price = parseFloat(item['Price'] || 0);
+            if (price <= lowThreshold) {
+                item.priceCategory = 'low';
+            } else if (price <= highThreshold) {
+                item.priceCategory = 'mid';
+            } else {
+                item.priceCategory = 'high';
+            }
+        });
+    }
+    
     // Initialize with all data
     filteredData = [...rawData];
     
@@ -438,7 +485,11 @@ function applyFilters() {
     const sortByValue = $('#sort-by').val();
     const limitResults = parseInt($('#limit-results').val()) || 0;
     
-    // Filter the data
+    // Calculate percentage metrics and price categories
+    calculatePercentageMetrics();
+    categorizePrices();
+    
+    // Filter the data based on the initial filter values (default: show all)
     filteredData = rawData.filter(item => {
         // Price range filter
         if (item['Price'] < priceMin || item['Price'] > priceMax) return false;
@@ -498,6 +549,62 @@ function applyFilters() {
     $('html, body').animate({
         scrollTop: $('#viz-title').offset().top - 100
     }, 500);
+}
+
+/**
+ * Calculate percentage metrics for each item
+ */
+function calculatePercentageMetrics() {
+    // First calculate totals across all data
+    let totalDailyViewsSum = 0;
+    let totalViewsSum = 0;
+    let totalSalesSum = 0;
+    
+    rawData.forEach(item => {
+        totalDailyViewsSum += parseFloat(item['Daily Views'] || 0);
+        totalViewsSum += parseFloat(item['Total Views'] || 0);
+        totalSalesSum += parseFloat(item['Est. Sales'] || 0);
+    });
+    
+    // Then calculate percentages for each item
+    rawData.forEach(item => {
+        const dailyViews = parseFloat(item['Daily Views'] || 0);
+        const totalViews = parseFloat(item['Total Views'] || 0);
+        const sales = parseFloat(item['Est. Sales'] || 0);
+        
+        // Calculate percentages (avoid division by zero)
+        item.percentDailyViews = totalDailyViewsSum > 0 ? (dailyViews / totalDailyViewsSum * 100) : 0;
+        item.percentTotalViews = totalViewsSum > 0 ? (totalViews / totalViewsSum * 100) : 0;
+        item.percentSales = totalSalesSum > 0 ? (sales / totalSalesSum * 100) : 0;
+        
+        // Calculate views per sale (avoid division by zero)
+        item.viewsPerSale = sales > 0 ? (totalViews / sales) : 0;
+    });
+}
+
+/**
+ * Categorize prices for each item
+ */
+function categorizePrices() {
+    // Get all prices and sort them to find thresholds
+    const prices = rawData.map(item => parseFloat(item['Price'] || 0)).sort((a, b) => a - b);
+    
+    // Define thresholds based on 33rd and 66th percentiles for more adaptive categorization
+    const lowThreshold = prices[Math.floor(prices.length * 0.33)] || 0;
+    const highThreshold = prices[Math.floor(prices.length * 0.66)] || 0;
+    
+    // Categorize each item
+    rawData.forEach(item => {
+        const price = parseFloat(item['Price'] || 0);
+        
+        if (price <= lowThreshold) {
+            item.priceCategory = 'low';
+        } else if (price <= highThreshold) {
+            item.priceCategory = 'mid';
+        } else {
+            item.priceCategory = 'high';
+        }
+    });
 }
 
 /**
@@ -669,23 +776,24 @@ function updateResultsOverview() {
     // Calculate metrics
     const totalListings = filteredData.length;
     
-    let totalPrice = 0;
+    let totalDailyViews = 0;
+    let totalViews = 0;
     let totalRevenue = 0;
+    let totalSales = 0;
     let totalHearts = 0;
     
     filteredData.forEach(item => {
-        totalPrice += item['Price'] || 0;
+        totalDailyViews += item['Daily Views'] || 0;
+        totalViews += item['Total Views'] || 0;
         totalRevenue += item['Est. Revenue'] || 0;
-        totalHearts += item['Hearts'] || 0;
+        totalSales += item['Est. Sales'] || 0;
     });
     
-    const avgPrice = totalListings > 0 ? totalPrice / totalListings : 0;
-    
     // Update the UI with jQuery
-    $('#total-listings').text(totalListings.toLocaleString());
-    $('#avg-price').text('$' + avgPrice.toFixed(2));
+    $('#total-daily-views').text(totalDailyViews.toLocaleString());
+    $('#total-views').text(totalViews.toLocaleString());
     $('#total-revenue').text('$' + totalRevenue.toLocaleString());
-    $('#total-hearts').text(totalHearts.toLocaleString());
+    $('#total-sales').text(totalSales.toLocaleString());
     
     // Update showing results text
     $('#total-results').text(totalListings.toLocaleString());
@@ -694,6 +802,9 @@ function updateResultsOverview() {
     $('.metric-card').each(function(index) {
         $(this).delay(index * 100).animate({opacity: 0.8}, 200).animate({opacity: 1}, 200);
     });
+    
+    // Market analysis is disabled for now until fully implemented
+    // The percentage metrics and price categorization are still being calculated
 }
 
 /**
@@ -702,55 +813,95 @@ function updateResultsOverview() {
 function renderTableView() {
     const tableContainer = $('#table-view');
     const tableHead = $('#data-table thead');
-    const tableBody = $('#results-table-body');
+    const tableBody = $('#data-table tbody');
     
     // Clear existing content
     tableBody.empty();
     
-    // Create sortable table headers if they don't exist yet
-    if (!window.tableSortInitialized) {
-        // Define columns that should be sortable
-        const columns = [
-            { field: 'Shop / Listing', label: 'Product', sortable: true },
-            { field: 'Listing Age (Days)', label: 'Age (Days)', sortable: true },
-            { field: 'Total Views', label: 'Views', sortable: true },
-            { field: 'Daily Views', label: 'Daily Views', sortable: true },
-            { field: 'Est. Sales', label: 'Sales', sortable: true },
-            { field: 'Price', label: 'Price', sortable: true },
-            { field: 'Est. Revenue', label: 'Revenue', sortable: true },
-            { field: 'Hearts', label: 'Hearts', sortable: true }
-        ];
-        
-        // Create header row with sort controls
-        const headerRow = $('<tr></tr>');
-        columns.forEach(column => {
-            const th = $(`<th ${column.sortable ? 'class="sortable"' : ''}>${column.label}</th>`);
+    // Define available columns for the table
+    const columns = [
+        { field: 'Shop / Listing', label: 'Shop / Listing', sortable: true },
+        { field: 'Listing Age (Days)', label: 'Age (Days)', sortable: true },
+        { field: 'Total Views', label: 'Views', sortable: true },
+        { field: 'Daily Views', label: 'Daily Views', sortable: true },
+        { field: 'percentDailyViews', label: 'Daily Views %', sortable: true },
+        { field: 'percentTotalViews', label: 'Total Views %', sortable: true },
+        { field: 'Est. Sales', label: 'Sales', sortable: true },
+        { field: 'percentSales', label: 'Sales %', sortable: true },
+        { field: 'viewsPerSale', label: 'Views/Sale', sortable: true },
+        { field: 'Price', label: 'Price', sortable: true },
+        { field: 'priceCategory', label: 'Price Category', sortable: true },
+        { field: 'Est. Revenue', label: 'Revenue', sortable: true },
+        { field: 'Hearts', label: 'Hearts', sortable: true }
+    ];
             
-            if (column.sortable) {
-                // Add sort indicators and click handler
-                th.append('<span class="sort-indicator ml-1">⇅</span>');
-                th.data('field', column.field);
+    // Create header row with sort controls
+    const headerRow = $('<tr></tr>');
+    columns.forEach(column => {
+        // Create table header with proper data-field attribute
+        const th = $(`<th ${column.sortable ? 'class="sortable"' : ''}>${column.label}</th>`);
+        
+        // Critical: Set data-field attribute for sorting
+        th.attr('data-field', column.field);
+            
+        // Add click event for sorting
+        if (column.sortable) {
+            th.addClass('sortable');
+            
+            // Add sort indicator span
+            th.append(' <span class="sort-indicator">⇅</span>');
+            
+            // Check if there's a current sort field and this column is the one being sorted
+            if (window.currentSortField === column.field) {
+                const direction = window.currentSortDirection || 'asc';
+                th.addClass(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+                th.data('sort', direction);
+                th.find('.sort-indicator').html(direction === 'asc' ? '↑' : '↓');
+            }
                 
                 th.on('click', function() {
-                    const field = $(this).data('field');
+                    // Get the column field from the header's data-field attribute
+                    const field = $(this).attr('data-field');
                     const currentSort = $(this).data('sort') || 'none';
+                    
+                    console.log(`Table header clicked: ${field}`);
+                    
+                    // Verify we have a valid field before proceeding
+                    if (!field) {
+                        console.error('No data-field attribute found on clicked header');
+                        return;
+                    }
                     
                     // Clear all other sort indicators
                     $('.sortable').removeClass('sort-asc sort-desc').data('sort', 'none')
                         .find('.sort-indicator').html('⇅');
                     
-                    // Set new sort direction
-                    let newSort = 'asc';
+                        // Set new sort direction (toggle between asc/desc or default to asc)
+                    let newSort;
                     if (currentSort === 'asc') {
+                        // If it was ascending, switch to descending
                         newSort = 'desc';
-                        $(this).addClass('sort-desc').removeClass('sort-asc')
-                            .find('.sort-indicator').html('↓');
+                        $(this).addClass('sort-desc').removeClass('sort-asc');
+                        $(this).find('.sort-indicator').html('↓');  // Down arrow for descending
+                    } else if (currentSort === 'desc') {
+                        // If it was descending, switch to ascending
+                        newSort = 'asc';
+                        $(this).addClass('sort-asc').removeClass('sort-desc');
+                        $(this).find('.sort-indicator').html('↑');  // Up arrow for ascending
                     } else {
-                        $(this).addClass('sort-asc').removeClass('sort-desc')
-                            .find('.sort-indicator').html('↑');
+                        // For first click, default to ascending
+                        newSort = 'asc';
+                        $(this).addClass('sort-asc').removeClass('sort-desc');
+                        $(this).find('.sort-indicator').html('↑');  // Up arrow for ascending
                     }
                     
+                    // Store the current sort direction on the element as both a data attribute and class
                     $(this).data('sort', newSort);
+                    console.log(`Sorting ${field} in ${newSort} order`);
+                    
+                    // Store the sort field and direction globally
+                    window.currentSortField = field;
+                    window.currentSortDirection = newSort;
                     
                     // Sort the data
                     sortTableData(field, newSort);
@@ -763,7 +914,6 @@ function renderTableView() {
         // Replace existing header with new sortable header
         tableHead.empty().append(headerRow);
         window.tableSortInitialized = true;
-    }
     
     // Get the current page data
     const start = (currentPage - 1) * itemsPerPage;
@@ -772,7 +922,7 @@ function renderTableView() {
     
     // No data message
     if (pageData.length === 0) {
-        tableBody.html('<tr><td colspan="8" class="text-center">No results found. Try adjusting your filters.</td></tr>');
+        tableBody.html('<tr><td colspan="13" class="text-center">No results found. Try adjusting your filters.</td></tr>');
         return;
     }
     
@@ -785,8 +935,18 @@ function renderTableView() {
                 <td style="color: black !important;">${item['Listing Age (Days)'] || 0}</td>
                 <td style="color: black !important;">${item['Total Views'] || 0}</td>
                 <td style="color: black !important;">${parseFloat(item['Daily Views'] || 0).toFixed(1)}</td>
+                <td style="color: black !important;">${(item.percentDailyViews || 0).toFixed(2)}%</td>
+                <td style="color: black !important;">${(item.percentTotalViews || 0).toFixed(2)}%</td>
                 <td style="color: black !important;">${item['Est. Sales'] || 0}</td>
+                <td style="color: black !important;">${(item.percentSales || 0).toFixed(2)}%</td>
+                <td style="color: black !important;">${(item.viewsPerSale || 0).toFixed(1)}</td>
                 <td style="color: black !important;">$${parseFloat(item['Price'] || 0).toFixed(2)}</td>
+                <td style="color: black !important;">
+                    ${item.priceCategory === 'high' ? '<span class="badge bg-danger">High</span>' : ''}
+                    ${item.priceCategory === 'mid' ? '<span class="badge bg-warning text-dark">Mid</span>' : ''}
+                    ${item.priceCategory === 'low' ? '<span class="badge bg-success">Low</span>' : ''}
+                    ${!item.priceCategory || item.priceCategory === 'unknown' ? '<span class="badge bg-secondary">Unknown</span>' : ''}
+                </td>
                 <td style="color: black !important;">$${parseFloat(item['Est. Revenue'] || 0).toFixed(2)}</td>
                 <td style="color: black !important;">${item['Hearts'] || 0}</td>
             </tr>
@@ -803,33 +963,82 @@ function renderTableView() {
  * Sort table data by field and direction
  */
 function sortTableData(field, direction) {
+    console.log(`Sorting data by ${field} in ${direction} order`);
+    
     // Create a copy of the filtered data to sort
     const sortedData = [...filteredData];
     
     // Sort the data
     sortedData.sort((a, b) => {
-        let aValue = a[field];
-        let bValue = b[field];
+        let aValue, bValue;
         
-        // Special handling for the Shop / Listing field
-        if (field === 'Shop / Listing') {
-            // Extract just the product name part for sorting
-            aValue = (aValue || '').toString().split('\n')[0] || '';
-            bValue = (bValue || '').toString().split('\n')[0] || '';
+        // Handle our custom fields
+        if (field === 'percentDailyViews') {
+            aValue = parseFloat(a.percentDailyViews || 0);
+            bValue = parseFloat(b.percentDailyViews || 0);
+        } 
+        else if (field === 'percentTotalViews') {
+            aValue = parseFloat(a.percentTotalViews || 0);
+            bValue = parseFloat(b.percentTotalViews || 0);
+        }
+        else if (field === 'percentSales') {
+            aValue = parseFloat(a.percentSales || 0);
+            bValue = parseFloat(b.percentSales || 0);
+        }
+        else if (field === 'viewsPerSale') {
+            aValue = parseFloat(a.viewsPerSale || 0);
+            bValue = parseFloat(b.viewsPerSale || 0);
+        }
+        else if (field === 'priceCategory') {
+            // Custom sorting for price categories: high > mid > low
+            const categoryRank = { 'high': 3, 'mid': 2, 'low': 1, 'unknown': 0 };
+            aValue = categoryRank[a.priceCategory || 'unknown'] || 0;
+            bValue = categoryRank[b.priceCategory || 'unknown'] || 0;
+        }
+        else if (field === 'Daily Views' || field === 'Total Views' || field === 'Hearts' ||
+                 field === 'Listing Age (Days)' || field === 'Engagement Rate' || field === 'Price') {
+            // Make sure all numeric fields are treated as numbers
+            aValue = parseFloat(a[field] || 0);
+            bValue = parseFloat(b[field] || 0);
+            
+            // Handle NaN values
+            if (isNaN(aValue)) aValue = 0;
+            if (isNaN(bValue)) bValue = 0;
+        }
+        else {
+            // Default handling for standard fields
+            aValue = a[field];
+            bValue = b[field];
+            
+            // Special handling for the Shop / Listing field
+            if (field === 'Shop / Listing') {
+                // Extract just the product name part for sorting
+                aValue = (aValue || '').toString().split('\n')[0] || '';
+                bValue = (bValue || '').toString().split('\n')[0] || '';
+            }
         }
         
         // Handle numeric values
         if (typeof aValue === 'number' && typeof bValue === 'number') {
+            // Handle special case of both being zero
+            if (aValue === 0 && bValue === 0) return 0;
+            
             return direction === 'asc' ? aValue - bValue : bValue - aValue;
         }
         
-        // Handle string values
-        aValue = (aValue || '').toString().toLowerCase();
-        bValue = (bValue || '').toString().toLowerCase();
+        // Handle string values - ensure we're working with strings
+        aValue = (aValue !== null && aValue !== undefined) ? aValue.toString().toLowerCase() : '';
+        bValue = (bValue !== null && bValue !== undefined) ? bValue.toString().toLowerCase() : '';
         
         if (aValue < bValue) return direction === 'asc' ? -1 : 1;
         if (aValue > bValue) return direction === 'asc' ? 1 : -1;
         return 0;
+    });
+    
+    // Log some diagnostics
+    console.log(`Sort complete. First few items (sorted by ${field}):`);
+    sortedData.slice(0, 3).forEach((item, index) => {
+        console.log(`  ${index}: ${item[field] || 'N/A'}`);
     });
     
     // Update the filtered data with the sorted data
@@ -1885,7 +2094,19 @@ function generateProductInsights() {
  * Generate a chart showing product trends
  */
 function generateProductTrendChart() {
-    const ctx = document.getElementById('product-trends-chart').getContext('2d');
+    // Check if the canvas exists
+    const canvas = document.getElementById('product-trends-chart');
+    if (!canvas) {
+        console.error('Canvas element not found: product-trends-chart');
+        return;
+    }
+    
+    // Destroy existing chart if it exists to prevent the "Canvas is already in use" error
+    if (window.productTrendChart) {
+        window.productTrendChart.destroy();
+    }
+    
+    const ctx = canvas.getContext('2d');
     
     // Calculate product metrics by price range
     const priceRanges = [
@@ -1926,8 +2147,8 @@ function generateProductTrendChart() {
     const avgHearts = metrics.items.map((count, i) => count > 0 ? metrics.hearts[i] / count : 0);
     const avgSales = metrics.items.map((count, i) => count > 0 ? metrics.sales[i] / count : 0);
     
-    // Create chart
-    new Chart(ctx, {
+    // Create the chart and store its reference
+    window.productTrendChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: priceRanges.map(range => range.label),
@@ -2154,7 +2375,19 @@ function generateMarketingStrategies() {
  * Generate a chart showing keyword performance
  */
 function generateKeywordPerformanceChart() {
-    const ctx = document.getElementById('keyword-performance-chart').getContext('2d');
+    // Check if canvas exists
+    const canvas = document.getElementById('keyword-performance-chart');
+    if (!canvas) {
+        console.error('Canvas element not found: keyword-performance-chart');
+        return;
+    }
+    
+    // Destroy existing chart if it exists
+    if (window.keywordPerformanceChart) {
+        window.keywordPerformanceChart.destroy();
+    }
+    
+    const ctx = canvas.getContext('2d');
     
     // For this demo, we'll simulate keyword performance data
     // In a real application, this would be extracted from the product data
@@ -2164,7 +2397,7 @@ function generateKeywordPerformanceChart() {
     const conversionRate = [2.8, 3.5, 1.9, 4.2, 3.1];
     
     // Create chart
-    new Chart(ctx, {
+    window.keywordPerformanceChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: keywords,

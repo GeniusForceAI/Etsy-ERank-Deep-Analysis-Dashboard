@@ -108,7 +108,13 @@ class DataProcessor {
                 estSales: row['Est. Sales'] || 0,
                 price: price,
                 estRevenue: estRevenue,
-                hearts: row['Hearts'] || 0
+                hearts: row['Hearts'] || 0,
+                // These will be calculated after all records are processed
+                percentDailyViews: 0,
+                percentTotalViews: 0,
+                percentSales: 0,
+                priceCategory: '',
+                viewsPerSale: 0
             };
         });
 
@@ -119,11 +125,74 @@ class DataProcessor {
         // Calculate summary metrics
         this.calculateSummaryMetrics();
         
+        // Calculate percentage metrics
+        this.calculatePercentageMetrics();
+        
+        // Categorize by price
+        this.categorizePrices();
+        
         // Process seller data
         this.processSellersData();
         
         // Extract keywords
         this.extractKeywords();
+    }
+
+    /**
+     * Calculate percentage-based metrics and views per sale
+     */
+    calculatePercentageMetrics() {
+        const listings = this.processedData.listings;
+        
+        // Calculate totals for reference
+        const totalDailyViews = listings.reduce((sum, item) => sum + item.dailyViews, 0);
+        const totalViews = listings.reduce((sum, item) => sum + item.totalViews, 0);
+        const totalSales = listings.reduce((sum, item) => sum + item.estSales, 0);
+        
+        // Update each listing with percentage metrics
+        listings.forEach(item => {
+            // Calculate percentages (avoid division by zero)
+            item.percentDailyViews = totalDailyViews > 0 ? (item.dailyViews / totalDailyViews * 100) : 0;
+            item.percentTotalViews = totalViews > 0 ? (item.totalViews / totalViews * 100) : 0;
+            item.percentSales = totalSales > 0 ? (item.estSales / totalSales * 100) : 0;
+            
+            // Calculate views per sale (avoid division by zero)
+            item.viewsPerSale = item.estSales > 0 ? (item.totalViews / item.estSales) : 0;
+        });
+        
+        // Add to summary data
+        this.processedData.summary.totalDailyViews = totalDailyViews;
+        this.processedData.summary.totalViews = totalViews;
+        this.processedData.summary.totalSales = totalSales;
+    }
+    
+    /**
+     * Categorize items by price (high, mid, low)
+     */
+    categorizePrices() {
+        const listings = this.processedData.listings;
+        
+        // Get all prices and sort them
+        const prices = listings.map(item => item.price).sort((a, b) => a - b);
+        
+        // Find thresholds for price categories (33% and 66% percentiles)
+        const lowThreshold = prices[Math.floor(prices.length * 0.33)] || 0;
+        const highThreshold = prices[Math.floor(prices.length * 0.66)] || 0;
+        
+        // Categorize each listing
+        listings.forEach(item => {
+            if (item.price <= lowThreshold) {
+                item.priceCategory = 'low';
+            } else if (item.price <= highThreshold) {
+                item.priceCategory = 'mid';
+            } else {
+                item.priceCategory = 'high';
+            }
+        });
+        
+        // Store thresholds in summary
+        this.processedData.summary.priceLowThreshold = lowThreshold;
+        this.processedData.summary.priceHighThreshold = highThreshold;
     }
 
     /**

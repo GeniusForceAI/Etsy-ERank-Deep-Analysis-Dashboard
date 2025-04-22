@@ -22,6 +22,47 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/advanced-dashboard.css">
     <link rel="stylesheet" href="css/mobile-dashboard.css">
+    
+    <!-- Custom styles for the data table -->
+    <style>
+        /* Make sure table column headers fit on one line */
+        #data-table th {
+            white-space: nowrap;
+            min-width: 120px;
+            padding: 10px 8px;
+            position: relative;
+        }
+        
+        /* Style for sortable columns */
+        #data-table th.sortable {
+            cursor: pointer;
+        }
+        
+        /* Make sure content cells don't wrap excessively */
+        #data-table td {
+            min-width: 80px;
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Ensure table is scrollable horizontally on small screens */
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        /* Highlight sorted columns */
+        #data-table th.sort-asc,
+        #data-table th.sort-desc {
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+        
+        /* Style sort indicators */
+        .sort-indicator {
+            margin-left: 5px;
+            font-size: 14px;
+        }
+    </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -96,14 +137,14 @@
                         <div class="row stats-row g-2">
                             <div class="col-3">
                                 <div class="metric-card">
-                                    <h3>Total Listings</h3>
-                                    <p id="total-listings">0</p>
+                                    <h3>Total Daily Views</h3>
+                                    <p id="total-daily-views">0</p>
                                 </div>
                             </div>
                             <div class="col-3">
                                 <div class="metric-card">
-                                    <h3>Avg. Price</h3>
-                                    <p id="avg-price">$0.00</p>
+                                    <h3>Total Views</h3>
+                                    <p id="total-views">0</p>
                                 </div>
                             </div>
                             <div class="col-3">
@@ -114,8 +155,8 @@
                             </div>
                             <div class="col-3">
                                 <div class="metric-card">
-                                    <h3>Total Hearts</h3>
-                                    <p id="total-hearts">0</p>
+                                    <h3>Total Est. Sales</h3>
+                                    <p id="total-sales">0</p>
                                 </div>
                             </div>
                         </div>
@@ -343,8 +384,13 @@
                                                     <th>Listing Age (Days)</th>
                                                     <th>Total Views</th>
                                                     <th>Daily Views</th>
+                                                    <th>% of Daily Views</th>
+                                                    <th>% of All Views</th>
                                                     <th>Est. Sales</th>
+                                                    <th>% of Sales</th>
+                                                    <th>Views Per Sale</th>
                                                     <th>Price</th>
+                                                    <th>Price Category</th>
                                                     <th>Est. Revenue</th>
                                                     <th>Hearts</th>
                                                 </tr>
@@ -508,6 +554,53 @@
                                                 Loading email marketing tips...
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Market Competitiveness Analysis Section -->
+            <div class="col-12 mb-4">
+                <div class="card floating-card">
+                    <div class="card-header dashboard-section-header">
+                        <h2>Market Competitiveness Analysis</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>Views Per Sale Analysis</h4>
+                                <p class="text-muted">Lower values indicate higher conversion efficiency</p>
+                                <div style="height: 350px;">
+                                    <canvas id="views-per-sale-chart"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h4>Market Share Analysis</h4>
+                                <p class="text-muted">Identifying top sellers by estimated sales and market share</p>
+                                <div class="list-group" id="top-sellers-list">
+                                    <p class="text-muted">Loading top sellers...</p>
+                                </div>
+                                <div class="mt-4">
+                                    <h5>Listing Percentage Metrics</h5>
+                                    <p class="text-muted">Top 5 listings by percentage metrics</p>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Listing</th>
+                                                    <th>% of Daily Views</th>
+                                                    <th>% of All Views</th>
+                                                    <th>% of Sales</th>
+                                                    <th>Price Category</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="percentage-metrics-table">
+                                                <!-- Will be populated dynamically -->
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>

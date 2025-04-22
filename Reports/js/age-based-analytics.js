@@ -93,114 +93,106 @@ function renderListingsList(items, containerId) {
     });
 }
 
-// Function to generate the age performance chart
+// Function to generate the age performance chart - simplified version to reduce RAM usage
 function generateAgePerformanceChart(data) {
-    const ctx = document.getElementById('age-performance-chart').getContext('2d');
-    
-    // Define age brackets for analysis
-    const ageBrackets = [
-        { min: 0, max: 7, label: '0-7 days' },
-        { min: 8, max: 30, label: '8-30 days' },
-        { min: 31, max: 90, label: '31-90 days' },
-        { min: 91, max: 180, label: '91-180 days' },
-        { min: 181, max: 365, label: '181-365 days' },
-        { min: 366, max: Infinity, label: '1+ year' }
-    ];
-    
-    // Calculate metrics for each age bracket
-    const bracketData = ageBrackets.map(bracket => {
-        const itemsInBracket = data.filter(item => {
-            const age = parseFloat(item['Listing Age (Days)']);
-            return age >= bracket.min && age <= bracket.max;
-        });
-        
-        if (itemsInBracket.length === 0) {
-            return {
-                label: bracket.label,
-                count: 0,
-                avgDailyViews: 0,
-                avgHearts: 0,
-                avgEngagement: 0
-            };
-        }
-        
-        // Calculate average metrics
-        const avgDailyViews = itemsInBracket.reduce((sum, item) => sum + parseFloat(item['Daily Views'] || 0), 0) / itemsInBracket.length;
-        const avgHearts = itemsInBracket.reduce((sum, item) => sum + parseFloat(item['Hearts'] || 0), 0) / itemsInBracket.length;
-        const avgEngagement = itemsInBracket.reduce((sum, item) => sum + parseFloat(item['Engagement Rate'] || 0), 0) / itemsInBracket.length;
-        
-        return {
-            label: bracket.label,
-            count: itemsInBracket.length,
-            avgDailyViews,
-            avgHearts,
-            avgEngagement
-        };
-    });
-    
-    // Create the chart
-    if (window.ageChart) {
-        window.ageChart.destroy();
+    // Get the canvas element
+    const canvas = document.getElementById('age-performance-chart');
+    if (!canvas) {
+        console.error('Canvas element not found for age performance chart');
+        return;
     }
     
-    window.ageChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: bracketData.map(b => b.label),
-            datasets: [
-                {
-                    label: 'Avg. Daily Views',
-                    data: bracketData.map(b => b.avgDailyViews.toFixed(1)),
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1,
-                    yAxisID: 'y'
-                },
-                {
-                    label: 'Avg. Engagement Rate (%)',
-                    data: bracketData.map(b => b.avgEngagement.toFixed(1)),
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1,
-                    type: 'line',
-                    yAxisID: 'y1'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    position: 'left',
-                    title: {
-                        display: true,
-                        text: 'Avg. Daily Views'
-                    }
-                },
-                y1: {
-                    beginAtZero: true,
-                    position: 'right',
-                    grid: {
-                        drawOnChartArea: false
-                    },
-                    title: {
-                        display: true,
-                        text: 'Engagement Rate (%)'
-                    }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        footer: function(tooltipItems) {
-                            const dataIndex = tooltipItems[0].dataIndex;
-                            return `Listings in group: ${bracketData[dataIndex].count}`;
-                        }
-                    }
-                }
+    // First clean up any existing chart to free memory
+    if (window.ageChart) {
+        window.ageChart.destroy();
+        window.ageChart = null;
+    }
+    
+    // Instead of rendering a complex chart, create a simplified table-based visualization
+    // that uses less RAM
+    
+    // Create a placeholder that explains we've disabled the heavy chart
+    const container = $(canvas).parent();
+    canvas.remove(); // Remove the canvas to prevent chart.js from using it
+    
+    // Add placeholder with explanation
+    container.html(`
+        <div class="alert alert-info mb-3">
+            <h5>Age-Based Analytics Summary</h5>
+            <p>The detailed chart has been replaced with a more efficient summary to reduce memory usage.</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover" id="age-analysis-table">
+                <thead>
+                    <tr>
+                        <th>Age Group</th>
+                        <th>Listings</th>
+                        <th>Avg. Daily Views</th>
+                        <th>Relative Performance</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    `);
+    
+    // Define age brackets for analysis - using fewer brackets to reduce processing
+    const ageBrackets = [
+        { min: 0, max: 30, label: '0-30 days (New)' },
+        { min: 31, max: 90, label: '31-90 days (Recent)' },
+        { min: 91, max: 180, label: '91-180 days (Established)' },
+        { min: 181, max: Infinity, label: 'Over 180 days (Mature)' }
+    ];
+    
+    // Calculate simplified metrics with more efficient data processing
+    const tableBody = $('#age-analysis-table tbody');
+    let maxAvgViews = 0;
+    
+    // Process each bracket's data
+    ageBrackets.forEach(bracket => {
+        // Count items and calculate simple metrics
+        let totalDailyViews = 0;
+        let count = 0;
+        
+        // Use a more efficient single-pass approach
+        for (let i = 0; i < Math.min(data.length, 100); i++) { // Limit to first 100 items for performance
+            const item = data[i];
+            const age = parseFloat(item['Listing Age (Days)']);
+            
+            if (age >= bracket.min && age <= bracket.max) {
+                count++;
+                totalDailyViews += parseFloat(item['Daily Views'] || 0);
             }
         }
+        
+        // Calculate average views
+        const avgDailyViews = count > 0 ? totalDailyViews / count : 0;
+        if (avgDailyViews > maxAvgViews) maxAvgViews = avgDailyViews;
+        
+        // Add row to table
+        tableBody.append(`
+            <tr>
+                <td>${bracket.label}</td>
+                <td>${count}</td>
+                <td>${avgDailyViews.toFixed(1)}</td>
+                <td class="age-performance-bar" data-value="${avgDailyViews}"></td>
+            </tr>
+        `);
     });
+    
+    // Add visual bar representations for performance
+    if (maxAvgViews > 0) {
+        $('.age-performance-bar').each(function() {
+            const value = parseFloat($(this).data('value'));
+            const percentage = Math.min(Math.round((value / maxAvgViews) * 100), 100);
+            const color = percentage > 75 ? 'bg-success' : percentage > 50 ? 'bg-info' : percentage > 25 ? 'bg-warning' : 'bg-danger';
+            
+            $(this).html(`
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar ${color}" role="progressbar" style="width: ${percentage}%" 
+                        aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            `);
+        });
+    }
 }
