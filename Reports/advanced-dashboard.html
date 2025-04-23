@@ -70,6 +70,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <!-- PDF generation libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" integrity="sha512-a9NgEEK7tsCvABL7KqtUTQjl69z7091EVPpw5KxPlZ93T141ffe1woLtbXTX+r2/8TtTvRX/v4zTL2UlMUPgwg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" integrity="sha512-P0bOMePRS378NwmPDVPU455C/TuxDS+8QwJozdc7PGgN8kLqR4ems0U/3DeJkmiE31749vYWHvBOtR+37qDCZQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <!-- Add viewport meta tags for mobile optimization -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -573,6 +577,24 @@
         <i class="fas fa-moon"></i>
     </button>
     
+    <!-- PDF Download Button with Theme Selection -->
+    <div class="pdf-download-container">
+        <button class="pdf-download-btn" id="pdf-download-btn" title="Download as PDF">
+            <i class="fas fa-file-pdf"></i>
+        </button>
+        <div class="pdf-theme-selector">
+            <button class="pdf-theme-option" data-theme="current" title="Use current theme">
+                <i class="fas fa-adjust"></i> Current Theme
+            </button>
+            <button class="pdf-theme-option" data-theme="light" title="Light theme PDF">
+                <i class="fas fa-sun"></i> Light Theme
+            </button>
+            <button class="pdf-theme-option" data-theme="dark" title="Dark theme PDF">
+                <i class="fas fa-moon"></i> Dark Theme
+            </button>
+        </div>
+    </div>
+    
     <!-- Mobile Navigation Bar (only visible on mobile) -->
     <nav class="mobile-nav d-md-none">
         <a href="#" class="mobile-nav-item active" data-section="visualization">
@@ -609,5 +631,7 @@
     <script src="js/dark-mode.js"></script>
     <!-- Mobile Dashboard -->
     <script src="js/mobile-dashboard.js"></script>
+    <!-- PDF Generator -->
+    <script src="js/pdf-generator.js"></script>
 </body>
 </html>
