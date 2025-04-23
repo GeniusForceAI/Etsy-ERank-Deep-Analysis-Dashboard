@@ -721,6 +721,44 @@ body .force-dark-table thead th,
     pointer-events: none;
 }
 
+/* Theme-aware summary styling */
+.theme-aware-summary {
+    border: none;
+    transition: all 0.3s ease;
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-color);
+}
+
+.theme-aware-summary .card-body {
+    padding: 1.25rem;
+}
+
+.age-summary-title {
+    color: #3c4b64;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.age-summary-text {
+    color: #495057;
+    margin-bottom: 0;
+}
+
+/* Dark mode for the summary card */
+.dark-mode .theme-aware-summary {
+    background: linear-gradient(145deg, #2d2d30, #252526);
+    border-left: 4px solid var(--accent-color);
+}
+
+.dark-mode .age-summary-title {
+    color: var(--accent-color);
+}
+
+.dark-mode .age-summary-text {
+    color: rgba(255, 255, 255, 0.85);
+}
+
 .tooltip-card h4 {
     font-size: 1rem;
     margin-bottom: 8px;

@@ -93,6 +93,21 @@ function renderListingsList(items, containerId) {
     });
 }
 
+// Listen for dark mode toggle to update card headers
+$(document).ready(function() {
+    // Initial call to ensure headers are styled correctly on load
+    if (typeof updateCardHeaderThemes === 'function') {
+        updateCardHeaderThemes();
+    }
+    
+    // Listen for dark mode toggle event
+    $(document).on('darkModeToggled', function() {
+        if (typeof updateCardHeaderThemes === 'function') {
+            updateCardHeaderThemes();
+        }
+    });
+});
+
 // Function to generate the age performance chart - simplified version to reduce RAM usage
 function generateAgePerformanceChart(data) {
     // Get the canvas element
@@ -115,11 +130,13 @@ function generateAgePerformanceChart(data) {
     const container = $(canvas).parent();
     canvas.remove(); // Remove the canvas to prevent chart.js from using it
     
-    // Add placeholder with explanation
+    // Add placeholder with explanation - using theme-aware styling
     container.html(`
-        <div class="alert alert-success mb-3">
-            <h5>Age-Based Analytics Summary</h5>
-            <p>The dashboard shows that most products perform better in their early lifecycle, with new listings (0-30 days) generating 24.2 daily views on average.</p>
+        <div class="card theme-aware-summary mb-3">
+            <div class="card-body">
+                <h5 class="age-summary-title">Age-Based Analytics Summary</h5>
+                <p class="age-summary-text">The dashboard shows that most products perform better in their early lifecycle, with new listings (0-30 days) generating 24.2 daily views on average.</p>
+            </div>
         </div>
         <div class="table-responsive" style="padding-bottom: 1rem;">
             <table class="table table-sm table-striped table-hover" id="age-analysis-table">

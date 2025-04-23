@@ -451,29 +451,50 @@
                             <h2>Age-Based Analytics</h2>
                         </div>
                         <div class="card-body">
-                            <div class="row mt-4">
+                            <!-- Age Performance Analysis -->
+                            <div class="row mb-4" id="age-performance-section">
                                 <div class="col-12">
-                                    <h4>Age Performance Analysis</h4>
-                                    <canvas id="age-performance-chart" style="width:100%; height:250px;"></canvas>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h4>Recently Trending Items</h4>
-                                    <p class="text-muted">Items with high views per day relative to their age</p>
-                                    <div class="list-group" id="trending-items-list">
-                                        <p class="text-muted">Loading trending items...</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <h4>Evergreen Performers</h4>
-                                    <p class="text-muted">Older listings that maintain consistent performance</p>
-                                    <div class="list-group" id="evergreen-items-list">
-                                        <p class="text-muted">Loading evergreen performers...</p>
+                                    <div class="card shadow-sm">
+                                        <div class="card-header bg-light">
+                                            <h4 class="mb-0">Age Performance Analysis</h4>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="age-performance-chart-container">
+                                                <canvas id="age-performance-chart" style="width:100%; height:250px;"></canvas>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                            <!-- Trending and Evergreen Items -->
+                            <div class="row mb-4">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card shadow-sm h-100">
+                                        <div class="card-header bg-light">
+                                            <h4 class="mb-0">Recently Trending Items</h4>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="text-muted">Items with high views per day relative to their age</p>
+                                            <div class="list-group" id="trending-items-list">
+                                                <p class="text-muted">Loading trending items...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card shadow-sm h-100">
+                                        <div class="card-header bg-light">
+                                            <h4 class="mb-0">Evergreen Performers</h4>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="text-muted">Older listings that maintain consistent performance</p>
+                                            <div class="list-group" id="evergreen-items-list">
+                                                <p class="text-muted">Loading evergreen performers...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                     </div>
                 </div>
 

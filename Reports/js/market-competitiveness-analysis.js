@@ -706,10 +706,17 @@ function updateCardHeaderThemes() {
     const isDarkMode = document.body.classList.contains('dark-mode');
     if (DEBUG_MCA) console.log(`Updating card headers for ${isDarkMode ? 'dark' : 'light'} mode`);
     
-    // Get all card headers in the Market Competitiveness Analysis section (charts and metrics table)
-    const marketAnalysisCards = document.querySelectorAll('#market-competitiveness-analysis .card-header, #percentage-metrics-section .card-header');
+    // Get all card headers in both Market Competitiveness and Age-Based Analytics sections
+    const allCardHeaders = document.querySelectorAll(
+        '#market-competitiveness-analysis .card-header, ' + 
+        '#percentage-metrics-section .card-header, ' + 
+        '#age-performance-section .card-header, ' + 
+        '.col-md-6 .card-header'
+    );
     
-    marketAnalysisCards.forEach(header => {
+    if (DEBUG_MCA) console.log(`Found ${allCardHeaders.length} card headers to update`);
+    
+    allCardHeaders.forEach(header => {
         if (isDarkMode) {
             // Switch to dark theme
             header.classList.remove('bg-light');

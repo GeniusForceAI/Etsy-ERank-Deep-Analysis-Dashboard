@@ -38,6 +38,9 @@ function toggleDarkMode() {
         updateChartTheme();
     }
     
+    // Trigger a custom event for other components to respond to dark mode changes
+    $(document).trigger('darkModeToggled');
+    
     // Remove transition class after animation completes
     setTimeout(() => {
         document.body.classList.remove('theme-transition');
