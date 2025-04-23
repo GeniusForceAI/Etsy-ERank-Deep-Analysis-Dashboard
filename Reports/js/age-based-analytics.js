@@ -121,8 +121,8 @@ function generateAgePerformanceChart(data) {
             <h5>Age-Based Analytics Summary</h5>
             <p>The dashboard shows that most products perform better in their early lifecycle, with new listings (0-30 days) generating 24.2 daily views on average.</p>
         </div>
-        <div class="table-responsive">
-            <table class="table table-sm table-hover" id="age-analysis-table">
+        <div class="table-responsive" style="padding-bottom: 1rem;">
+            <table class="table table-sm table-striped table-hover" id="age-analysis-table">
                 <thead>
                     <tr>
                         <th>Age Group</th>

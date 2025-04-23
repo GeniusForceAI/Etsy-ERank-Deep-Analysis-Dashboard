@@ -484,6 +484,34 @@
                         <h2>Market Competitiveness Analysis</h2>
                     </div>
                     <div class="card-body">
+                        <div class="row" id="percentage-metrics-section" style="margin-bottom: 1rem;">
+                            <div class="col-12">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-light">
+                                        <h4 class="mb-0">Listing Percentage Metrics</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">Top 5 listings by percentage metrics</p>
+                                        <div class="table-responsive" >
+                                            <table class="table table-striped table-hover">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Listing</th>
+                                                        <th>% of Daily Views</th>
+                                                        <th>% of All Views</th>
+                                                        <th>% of Sales</th>
+                                                        <th>Price Category</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="percentage-metrics-table">
+                                                    <!-- Will be populated dynamically -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row mb-4" id="market-competitiveness-analysis">
                             <div class="col-md-6">
                                 <div class="card shadow-sm h-100">
@@ -512,34 +540,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row" id="percentage-metrics-section">
-                            <div class="col-12">
-                                <div class="card shadow-sm">
-                                    <div class="card-header bg-light">
-                                        <h4 class="mb-0">Listing Percentage Metrics</h4>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="text-muted">Top 5 listings by percentage metrics</p>
-                                        <div class="table-responsive">
-                                            <table class="table table-striped table-hover">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>Listing</th>
-                                                        <th>% of Daily Views</th>
-                                                        <th>% of All Views</th>
-                                                        <th>% of Sales</th>
-                                                        <th>Price Category</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="percentage-metrics-table">
-                                                    <!-- Will be populated dynamically -->
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </div>
                 </div>
             </div>
@@ -653,76 +654,6 @@
                                         <div id="collapseEmail" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#marketingAccordion">
                                             <div class="accordion-body" id="email-tips">
                                                 Loading email marketing tips...
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Market Competitiveness Analysis visualizations -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card floating-card mb-4">
-                        <div class="card-header dashboard-section-header">
-                            <h2>Market Competitiveness Analysis</h2>
-                        </div>
-                        <div class="card-body">
-                            <!-- Views Per Sale Analysis -->
-                            <div class="row mb-4">
-                                <div class="col-md-12 col-lg-6 mb-3">
-                                    <div class="card h-100">
-                                        <div class="card-header">
-                                            <h5>Views Per Sale Analysis</h5>
-                                            <small class="text-muted">Lower values indicate higher conversion efficiency</small>
-                                        </div>
-                                        <div class="card-body">
-                                            <canvas id="views-per-sale-chart" height="250"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Market Share Analysis -->
-                                <div class="col-md-12 col-lg-6 mb-3">
-                                    <div class="card h-100">
-                                        <div class="card-header">
-                                            <h5>Market Share Analysis</h5>
-                                            <small class="text-muted">Identifying top sellers by estimated sales and market share</small>
-                                        </div>
-                                        <div class="card-body">
-                                            <canvas id="market-share-chart" height="250"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Listing Percentage Metrics -->
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h5>Listing Percentage Metrics</h5>
-                                            <small class="text-muted">Top 5 listings by percentage metrics</small>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="table-responsive">
-                                                <table class="table table-striped">
-                                                    <thead>
-                                                        <tr class="bg-primary text-white">
-                                                            <th>LISTING</th>
-                                                            <th>% OF DAILY VIEWS</th>
-                                                            <th>% OF ALL VIEWS</th>
-                                                            <th>% OF SALES</th>
-                                                            <th>PRICE CATEGORY</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="percentage-metrics-table">
-                                                        <!-- Table will be populated by JavaScript -->
-                                                    </tbody>
-                                                </table>
                                             </div>
                                         </div>
                                     </div>
