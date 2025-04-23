@@ -1180,6 +1180,15 @@ function showDataLoadedState() {
         
         // Generate age-based analytics for trending and evergreen products
         generateAgeBasedAnalytics();
+        
+        // Generate market competitiveness analysis visualizations
+        if (typeof initMarketCompetitivenessAnalysis === 'function') {
+            console.log('Triggering Market Competitiveness Analysis from showDataLoadedState');
+            initMarketCompetitivenessAnalysis();
+            
+            // Also trigger a custom event for components that might be listening
+            $(document).trigger('dataLoaded');
+        }
     }, 1500);
 }
 /**
