@@ -352,59 +352,101 @@ body .force-dark-table thead th,
     padding: 10px 15px;
 }
 
-/* Apply dark-table to our table in dark mode */
-.dark-mode #data-table {
+/* Apply dark-table styling to ALL tables in dark mode */
+.dark-mode table.table {
     background-color: #252535;
     border: 1px solid #3d3d4d;
+    color: #ffffff;
 }
 
-.dark-mode #data-table thead tr th {
-    background-color: #2a2a3a;
-    color: white;
+.dark-mode table.table thead tr th,
+.dark-mode table.table thead tr.bg-primary th,
+.dark-mode table.table th {
+    background-color: #2a2a3a !important;
+    color: white !important;
     border: 1px solid #3d3d4d;
+    border-bottom: 2px solid #4361ee;
 }
 
-.dark-mode #data-table tbody tr:nth-of-type(odd) {
-    background-color: #303040;
+.dark-mode table.table tbody tr:nth-of-type(odd) {
+    background-color: #303040 !important;
 }
 
-.dark-mode #data-table tbody tr:nth-of-type(even) {
-    background-color: #252535;
+.dark-mode table.table tbody tr:nth-of-type(even) {
+    background-color: #252535 !important;
 }
 
-.dark-mode #data-table tbody tr td {
-    color: #000000;
+.dark-mode table.table tbody tr td,
+.dark-mode table.table td {
+    /* color: #e0e0e0 !important; */
     border: 1px solid #3d3d4d;
+    border-top-color: #3d3d4d !important;
 }
 
-.dark-mode #data-table tbody tr:hover {
-    background-color: #3e3e60;
+.dark-mode table.table tbody tr:hover {
+    background-color: #3e3e60 !important;
 }
 
-/* Ensure text is readable */
-.dark-mode #results-table-body td {
-    color: #ffffff !important;
+/* Make table headers consistent in dark mode */
+.dark-mode .table-light,
+.dark-mode .table-light th,
+.dark-mode thead.table-light th {
+    background-color: #2a2a3a !important;
+    color: white !important;
+}
+
+/* Ensure text is readable for all table cells */
+.dark-mode #results-table-body td,
+.dark-mode .table tbody td,
+.dark-mode #percentage-metrics-table td,
+.dark-mode #age-analysis-table td {
     font-weight: normal !important;
     border-top: 1px solid #3a3a4a !important;
 }
 
-/* Direct styling for table rows */
-.dark-mode tr.data-row {
+/* Direct styling for all data rows in tables */
+.dark-mode tr.data-row,
+.dark-mode .table-striped tbody tr:nth-of-type(even) {
     background-color: #2c2c36 !important;
 }
 
-.dark-mode tr.data-row:nth-child(odd) {
+.dark-mode tr.data-row:nth-child(odd),
+.dark-mode .table-striped tbody tr:nth-of-type(odd),
+.dark-mode table.table-striped > tbody > tr:nth-of-type(odd),
+.dark-mode .table-striped > tbody > tr:nth-of-type(odd) {
     background-color: #333342 !important;
 }
 
-.dark-mode tr.data-row:hover {
+.dark-mode tr.data-row:hover,
+.dark-mode .table tbody tr:hover {
     background-color: #3e3e5a !important;
 }
 
-.dark-mode tr.data-row td {
-    color: #ffffff !important;
-    font-weight: 500 !important;
+.dark-mode tr.data-row td,
+.dark-mode .table-striped tbody td {
+    /* color: #e0e0e0 !important; */
+    font-weight: 400 !important;
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Age-analysis table specific styles */
+.dark-mode #age-analysis-table {
+    background-color: #252535;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dark-mode #age-analysis-table thead tr {
+    background-color: #4361ee !important;
+}
+
+.dark-mode #age-analysis-table thead th {
+    color: white !important;
+    border-color: #5a73f4;
+}
+
+.dark-mode .age-performance-bar .progress {
+    background-color: #333342;
 }
 
 .dark-mode .table th {
