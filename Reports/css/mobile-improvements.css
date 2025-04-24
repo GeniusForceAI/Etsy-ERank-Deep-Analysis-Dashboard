@@ -240,6 +240,16 @@
         text-align: center !important;
     }
     
+    /* Override flex-justify-content-between to use center on mobile */
+    .flex-justify-content-between, .d-flex.justify-content-between, div.flex-justify-content-between, div.d-flex.justify-content-between {
+        justify-content: center !important;
+    }
+    
+    /* Directly target the class shown in DOM inspection */
+    div.flex-justify-content {
+        justify-content: center !important;
+    }
+    
     /* Target the specific buttons at the top of the dashboard */
     a[href*="advanced"], a.btn-outline-secondary, button.btn-primary.btn-lg {
         margin: 0 auto 10px auto !important;
@@ -248,6 +258,11 @@
         align-items: center !important;
         min-width: 200px !important;
         text-align: center !important;
+    }
+    
+    /* Specifically target Export Report button */
+    .btn[id*="export"], button[id*="export"], #export-report, .export-button {
+        margin: auto !important;
     }
     
     /* Force center text in all buttons */

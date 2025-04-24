@@ -1,0 +1,40 @@
+/* Direct fixes for mobile centering based on actual DOM inspection */
+@media (max-width: 767.98px) {
+    /* Override any flex justify-content */
+    div[class*="justify-content"], div[class*="flex-justify"] {
+        justify-content: center !important;
+    }
+    
+    /* Exact class from the DOM inspection */
+    .flex-justify-content, .d-flex {
+        justify-content: center !important;
+    }
+    
+    /* Exact button targeting */
+    button.btn.btn-primary[id="export-report"] {
+        margin: auto !important;
+        display: block !important;
+    }
+    
+    /* Target parent div containing the export button */
+    div.flex-justify-content > button {
+        margin: auto !important;
+    }
+    
+    /* Apply to any button with export in the ID or class */
+    [id*="export"], [class*="export"] {
+        margin: auto !important;
+    }
+    
+    /* Force all flex containers to center in mobile */
+    .d-flex, [class*="d-flex"], [class*="flex"] {
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    
+    /* Last resort - target all buttons */
+    button, .btn {
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+}
