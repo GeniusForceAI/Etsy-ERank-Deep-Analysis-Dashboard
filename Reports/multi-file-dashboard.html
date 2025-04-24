@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etsy Multi-File Analytics Dashboard</title>
+    
+    <!-- Open Graph / Facebook Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://geniusforceai.github.io/Etsy-ERank-Deep-Analysis-Dashboard/Reports/multi-file-dashboard.html">
+    <meta property="og:title" content="Etsy Multi-File Analytics Dashboard">
+    <meta property="og:description" content="Comprehensive analytics dashboard that analyzes multiple ERank CSV files to identify top performing listings across keywords.">
+    <meta property="og:image" content="https://geniusforceai.github.io/Etsy-ERank-Deep-Analysis-Dashboard/Reports/images/link-preview-background.png">
+    
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://geniusforceai.github.io/Etsy-ERank-Deep-Analysis-Dashboard/Reports/multi-file-dashboard.html">
+    <meta name="twitter:title" content="Etsy Multi-File Analytics Dashboard">
+    <meta name="twitter:description" content="Comprehensive analytics dashboard that analyzes multiple ERank CSV files to identify top performing listings across keywords.">
+    <meta name="twitter:image" content="https://geniusforceai.github.io/Etsy-ERank-Deep-Analysis-Dashboard/Reports/images/link-preview-background.png">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/advanced-dashboard.css">
+    <link rel="stylesheet" href="css/mobile-dashboard.css">
+    
+    <!-- Custom styles for the multi-file dashboard -->
+    <style>
+        .file-item {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background-color: rgba(13, 110, 253, 0.1);
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .file-item .file-name {
+            font-weight: 500;
+            flex-grow: 1;
+        }
+        
+        .file-item .keyword-tag {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+        }
+        
+        .file-item .remove-file {
+            color: #dc3545;
+            cursor: pointer;
+        }
+        
+        .multi-upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .multi-upload-area.highlight {
+            border-color: #28a745;
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+        
+        .ranking-card {
+            transition: transform 0.2s;
+        }
+        
+        .ranking-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .tier-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .tier-a {
+            background-color: #28a745;
+        }
+        
+        .tier-b {
+            background-color: #17a2b8;
+        }
+        
+        .tier-c {
+            background-color: #6c757d;
+        }
+        
+        .score-indicator {
+            width: 100%;
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .score-bar {
+            height: 100%;
+            border-radius: 4px;
+        }
+        
+        .composite-score-bar {
+            background-color: #007bff;
+        }
+        
+        .opportunity-score-bar {
+            background-color: #6f42c1;
+        }
+        
+        .weight-slider {
+            width: 100%;
+        }
+        
+        .analysis-summary-card {
+            border-left: 4px solid #007bff;
+        }
+    </style>
+    
+    <!-- Chart.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Mobile Web App Capability -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#007bff">
+    <meta name="mobile-web-app-capable" content="yes">
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Combined header and results overview in one floating card -->
+        <div class="row mb-4" id="top-section">
+            <!-- Upload Panel (shown initially) -->
+            <div class="col-12" id="loading-section">
+                <div class="card">
+                    <div class="card-header dashboard-section-header">
+                        <h2>Upload Multiple ERank CSV Files</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="upload-container" class="text-center py-4">
+                            <div class="mb-4">
+                                <p class="lead">Upload multiple ERank CSV files for comprehensive cross-keyword analysis</p>
+                                <div class="multi-upload-area" id="multi-upload-area">
+                                    <i class="fas fa-file-csv fa-3x mb-3 text-primary"></i>
+                                    <p>Drag and drop multiple CSV files here, or click to select files</p>
+                                    <input type="file" id="csv-files-upload" multiple accept=".csv" style="display: none;">
+                                    <button class="btn btn-primary" id="select-files-btn">Select Files</button>
+                                </div>
+                                
+                                <div id="files-list" class="mt-4 text-start" style="display: none;">
+                                    <h5>Selected Files:</h5>
+                                    <div id="files-container"></div>
+                                    <div class="d-flex justify-content-between mt-3">
+                                        <button id="clear-files" class="btn btn-outline-secondary">Clear All</button>
+                                        <button id="process-files" class="btn btn-success">Analyze Files</button>
+                                    </div>
+                                </div>
+                                
+                                <p class="mt-3">Don't have CSV files? <button id="use-sample-multi-data" class="btn btn-link p-0">Use sample data</button></p>
+                            </div>
+                        </div>
+                        
+                        <div id="loading-message" style="display: none;" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Processing multiple CSV files. This may take a moment...</p>
+                            <div class="progress mt-2">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" id="process-progress"></div>
+                            </div>
+                            <div id="success-message" style="display: none;" class="mt-4">
+                                <div class="alert alert-success">
+                                    <p>Data successfully analyzed! Results are displayed below.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Dashboard Section (hidden initially) -->
+        <div id="results-dashboard" style="display: none;">
+            <!-- Dashboard Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="enhanced-header">
+                        <div class="text-center mb-3">
+                            <h1 class="dashboard-title mb-2">Multi-File Analytics Dashboard</h1>
+                            <p class="lead">Cross-keyword analysis of top Etsy listings</p>
+                            <div class="d-flex justify-content-center mt-3">
+                                <div class="ms-auto me-auto">
+                                    <button id="export-report" class="btn btn-primary"><i class="fas fa-file-export me-1"></i> Export Report</button>
+                                    <a href="advanced-dashboard.html" class="btn btn-outline-light ms-2"><i class="fas fa-arrow-left me-1"></i> Back to Advanced Dashboard</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Analysis Summary Stats -->
+                        <div class="stats-container pt-2">
+                            <div class="row stats-row g-2">
+                                <div class="col-4">
+                                    <div class="metric-card">
+                                        <i class="fas fa-file-csv metric-icon"></i>
+                                        <h3>Files Analyzed</h3>
+                                        <p id="files-count">0</p>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="metric-card">
+                                        <i class="fas fa-tag metric-icon"></i>
+                                        <h3>Total Listings</h3>
+                                        <p id="listings-count">0</p>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="metric-card">
+                                        <i class="fas fa-chart-line metric-icon"></i>
+                                        <h3>Average Est. Sales</h3>
+                                        <p id="avg-sales">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Controls and Settings -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card floating-card">
+                        <div class="card-header dashboard-section-header">
+                            <h2>Analysis Settings</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Composite Score Weights -->
+                                <div class="col-md-4">
+                                    <h5>Composite Score Weights</h5>
+                                    <div class="mb-3">
+                                        <label for="weight-revenue" class="form-label">Revenue (35%)</label>
+                                        <input type="range" class="form-range weight-slider" id="weight-revenue" min="0" max="100" value="35">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="weight-sales" class="form-label">Sales (20%)</label>
+                                        <input type="range" class="form-range weight-slider" id="weight-sales" min="0" max="100" value="20">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="weight-views" class="form-label">Daily Views % (15%)</label>
+                                        <input type="range" class="form-range weight-slider" id="weight-views" min="0" max="100" value="15">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="weight-efficiency" class="form-label">Views/Sale Efficiency (15%)</label>
+                                        <input type="range" class="form-range weight-slider" id="weight-efficiency" min="0" max="100" value="15">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="weight-hearts" class="form-label">Hearts (10%)</label>
+                                        <input type="range" class="form-range weight-slider" id="weight-hearts" min="0" max="100" value="10">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="weight-age" class="form-label">Age Factor (5%)</label>
+                                        <input type="range" class="form-range weight-slider" id="weight-age" min="0" max="100" value="5">
+                                    </div>
+                                </div>
+                                
+                                <!-- Tier Thresholds -->
+                                <div class="col-md-4">
+                                    <h5>Performance Tier Thresholds</h5>
+                                    <div class="mb-3">
+                                        <label for="tier-high-revenue" class="form-label">High Revenue Tier (Top %)</label>
+                                        <input type="number" class="form-control" id="tier-high-revenue" min="1" max="50" value="15">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="tier-conversion" class="form-label">Conversion Champions Tier</label>
+                                        <input type="number" class="form-control" id="tier-conversion" min="1" max="100" value="50">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="tier-growth" class="form-label">Growth Performers Tier</label>
+                                        <input type="number" class="form-control" id="tier-growth" min="1" max="100" value="20">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="tier-visibility" class="form-label">Visibility Champions Tier</label>
+                                        <input type="number" class="form-control" id="tier-visibility" min="1" max="100" value="20">
+                                    </div>
+                                </div>
+                                
+                                <!-- Analysis Controls -->
+                                <div class="col-md-4">
+                                    <h5>Analysis Controls</h5>
+                                    <div class="mb-3">
+                                        <label for="normalize-method" class="form-label">Normalization Method</label>
+                                        <select class="form-select" id="normalize-method">
+                                            <option value="percentile">Percentile Ranking</option>
+                                            <option value="minmax">Min-Max Scaling</option>
+                                            <option value="zscore">Z-Score Standardization</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="selection-strategy" class="form-label">List Selection Strategy</label>
+                                        <select class="form-select" id="selection-strategy">
+                                            <option value="balanced">Balanced (Micro + Macro)</option>
+                                            <option value="micro">Micro Market Focus</option>
+                                            <option value="macro">Macro Market Focus</option>
+                                        </select>
+                                    </div>
+                                    <div class="d-grid gap-2 mt-4">
+                                        <button id="recalculate-analysis" class="btn btn-primary">Recalculate Analysis</button>
+                                        <button id="reset-settings" class="btn btn-outline-secondary">Reset to Defaults</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- A/B/C Tier Results Tabs -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <ul class="nav nav-tabs" id="resultsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="a-list-tab" data-bs-toggle="tab" data-bs-target="#a-list" type="button" role="tab" aria-controls="a-list" aria-selected="true">
+                                <i class="fas fa-trophy text-success me-1"></i> A-List (21)
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="b-list-tab" data-bs-toggle="tab" data-bs-target="#b-list" type="button" role="tab" aria-controls="b-list" aria-selected="false">
+                                <i class="fas fa-star text-info me-1"></i> B-List (21)
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="c-list-tab" data-bs-toggle="tab" data-bs-target="#c-list" type="button" role="tab" aria-controls="c-list" aria-selected="false">
+                                <i class="fas fa-check-circle text-secondary me-1"></i> C-List (21)
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="false">
+                                <i class="fas fa-chart-pie me-1"></i> Analysis Summary
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="resultsTabContent">
+                        <!-- A-List Tab Content -->
+                        <div class="tab-pane fade show active" id="a-list" role="tabpanel" aria-labelledby="a-list-tab">
+                            <div class="card floating-card">
+                                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                                    <h3 class="mb-0">A-List: Top 21 Listings</h3>
+                                    <div>
+                                        <button class="btn btn-sm btn-light me-2" id="export-a-list"><i class="fas fa-file-export me-1"></i> Export</button>
+                                        <button class="btn btn-sm btn-light" id="view-a-list-details"><i class="fas fa-table me-1"></i> View Details</button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row" id="a-list-container">
+                                        <!-- A-List items will be dynamically inserted here -->
+                                        <!-- Loading placeholder -->
+                                        <div class="col-12 text-center py-5">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="mt-3">Calculating top listings...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- B-List Tab Content -->
+                        <div class="tab-pane fade" id="b-list" role="tabpanel" aria-labelledby="b-list-tab">
+                            <div class="card floating-card">
+                                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                                    <h3 class="mb-0">B-List: Strong Contenders</h3>
+                                    <div>
+                                        <button class="btn btn-sm btn-light me-2" id="export-b-list"><i class="fas fa-file-export me-1"></i> Export</button>
+                                        <button class="btn btn-sm btn-light" id="view-b-list-details"><i class="fas fa-table me-1"></i> View Details</button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row" id="b-list-container">
+                                        <!-- B-List items will be dynamically inserted here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- C-List Tab Content -->
+                        <div class="tab-pane fade" id="c-list" role="tabpanel" aria-labelledby="c-list-tab">
+                            <div class="card floating-card">
+                                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                                    <h3 class="mb-0">C-List: Worth Considering</h3>
+                                    <div>
+                                        <button class="btn btn-sm btn-light me-2" id="export-c-list"><i class="fas fa-file-export me-1"></i> Export</button>
+                                        <button class="btn btn-sm btn-light" id="view-c-list-details"><i class="fas fa-table me-1"></i> View Details</button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row" id="c-list-container">
+                                        <!-- C-List items will be dynamically inserted here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Analysis Summary Tab -->
+                        <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+                            <div class="card floating-card">
+                                <div class="card-header dashboard-section-header">
+                                    <h3 class="mb-0">Analysis Summary & Insights</h3>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Keyword Distribution Chart -->
+                                    <div class="row mb-4">
+                                        <div class="col-md-6">
+                                            <div class="card shadow-sm h-100">
+                                                <div class="card-header bg-light">
+                                                    <h4 class="mb-0">Keyword Distribution</h4>
+                                                </div>
+                                                <div class="card-body">
+                                                    <canvas id="keyword-distribution-chart" height="300"></canvas>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card shadow-sm h-100">
+                                                <div class="card-header bg-light">
+                                                    <h4 class="mb-0">Performance Metrics Comparison</h4>
+                                                </div>
+                                                <div class="card-body">
+                                                    <canvas id="metrics-comparison-chart" height="300"></canvas>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Performance Matrix -->
+                                    <div class="row mb-4">
+                                        <div class="col-md-12">
+                                            <div class="card shadow-sm">
+                                                <div class="card-header bg-light">
+                                                    <h4 class="mb-0">Performance Matrix</h4>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-end mb-3">
+                                                        <select id="x-axis-matrix" class="form-select form-select-sm me-2" style="width: auto;">
+                                                            <option value="revenue">Revenue</option>
+                                                            <option value="sales">Sales</option>
+                                                            <option value="price">Price</option>
+                                                            <option value="views">Views</option>
+                                                            <option value="hearts">Hearts</option>
+                                                        </select>
+                                                        <select id="y-axis-matrix" class="form-select form-select-sm" style="width: auto;">
+                                                            <option value="viewsPerSale">Views/Sale</option>
+                                                            <option value="dailyViews">Daily Views %</option>
+                                                            <option value="salesRate">Sales Rate</option>
+                                                            <option value="listingAge">Listing Age</option>
+                                                        </select>
+                                                    </div>
+                                                    <div style="height: 500px;">
+                                                        <canvas id="performance-matrix-chart"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Analysis Insights -->
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="card analysis-summary-card">
+                                                <div class="card-body">
+                                                    <h4>Key Insights</h4>
+                                                    <div id="analysis-insights">
+                                                        <!-- Insights will be dynamically generated -->
+                                                        <p class="text-muted">Analysis insights will appear here after processing data...</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lodash for utility functions -->
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Scripts -->
+    <script src="js/dark-mode.js"></script>
+    <script src="js/mobile-dashboard.js"></script>
+    <!-- Multi-File Analysis Scripts (load in correct dependency order) -->
+    <script src="js/multi-file-core.js"></script>
+    <script src="js/multi-file-ranking.js"></script>
+    <script src="js/multi-file-visualizations-fixed.js"></script>
+    <script src="js/multi-file-visualizations-2-fixed.js"></script>
+    <script src="js/multi-file-ui-fixed.js"></script>
+    <script src="js/multi-file-ui-analysis-fixed.js"></script>
+    <!-- Main controller (load last) -->
+    <script src="js/multi-file-analysis-fixed.js"></script>
+</body>
+</html>

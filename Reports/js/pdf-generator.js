@@ -40,7 +40,7 @@ const pdfConfig = {
 /**
  * Generate a structured PDF of the dashboard data and charts
  */
-function generatePDF(opts = {}) {
+async function generatePDF(opts = {}) {
     // Show a loading indicator
     showPDFGenerationLoading(true);
     
@@ -79,8 +79,10 @@ function generatePDF(opts = {}) {
     
     // Start building the PDF content
     try {
+        // Capture chart images for PDF sections
+        const chartImages = await getChartImagesForPDF(themeChoice);
         // Begin creating the document definition
-        createPDFDocument(dashboardData, theme, opts)
+        createPDFDocument(dashboardData, theme, opts, chartImages)
             .then(docDefinition => {
                 // Generate and download the PDF
                 generateAndDownloadPDF(docDefinition, opts);
@@ -140,7 +142,7 @@ function getAvailableDashboardData() {
 /**
  * Create the PDF document definition with structured content
  */
-async function createPDFDocument(data, theme, opts) {
+async function createPDFDocument(data, theme, opts, chartImages = {}) {
     console.log('Creating PDF document definition...');
     
     // Get the current date for the report title
@@ -233,10 +235,10 @@ async function createPDFDocument(data, theme, opts) {
     await addSummaryMetrics(docDefinition, data, theme);
     
     // Add market competitiveness section if available
-    await addMarketCompetitivenessSection(docDefinition, data, theme);
+    await addMarketCompetitivenessSection(docDefinition, data, theme, chartImages.marketCompetitiveness);
     
     // Add age-based analytics section if available
-    await addAgeBasedAnalyticsSection(docDefinition, data, theme);
+    await addAgeBasedAnalyticsSection(docDefinition, data, theme, chartImages.ageBasedAnalytics);
     
     // Add all other sections based on available data
     if (data.length > 0) {
@@ -352,7 +354,7 @@ async function addSummaryMetrics(docDefinition, data, theme) {
 /**
  * Add market competitiveness section to the PDF document
  */
-async function addMarketCompetitivenessSection(docDefinition, data, theme) {
+async function addMarketCompetitivenessSection(docDefinition, data, theme, chartImage) {
     console.log('Adding market competitiveness section...');
     
     // Add section header
@@ -360,6 +362,15 @@ async function addMarketCompetitivenessSection(docDefinition, data, theme) {
         text: 'Market Competitiveness Analysis',
         style: 'subheader'
     });
+    // Insert chart image if available
+    if (chartImage) {
+        docDefinition.content.push({
+            image: chartImage,
+            width: 480,
+            alignment: 'center',
+            margin: [0, 10, 0, 10]
+        });
+    }
     
     if (data.length === 0) {
         docDefinition.content.push({
@@ -388,7 +399,7 @@ async function addMarketCompetitivenessSection(docDefinition, data, theme) {
 /**
  * Add age-based analytics section to the PDF document
  */
-async function addAgeBasedAnalyticsSection(docDefinition, data, theme) {
+async function addAgeBasedAnalyticsSection(docDefinition, data, theme, chartImage) {
     console.log('Adding age-based analytics section...');
     
     // Add section header
@@ -397,6 +408,15 @@ async function addAgeBasedAnalyticsSection(docDefinition, data, theme) {
         style: 'subheader',
         pageBreak: 'before'
     });
+    // Insert chart image if available
+    if (chartImage) {
+        docDefinition.content.push({
+            image: chartImage,
+            width: 480,
+            alignment: 'center',
+            margin: [0, 10, 0, 10]
+        });
+    }
     
     if (data.length === 0) {
         docDefinition.content.push({
@@ -1582,3 +1602,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+/**
+ * Capture chart images for each analytics section for PDF embedding
+ * Returns an object: { marketCompetitiveness, ageBasedAnalytics, ... }
+ */
+async function getChartImagesForPDF(isDarkMode) {
+    // Map of section keys to canvas element IDs
+    const chartMap = {
+        marketCompetitiveness: 'views-sales-chart', // Market Competitiveness chart
+        ageBasedAnalytics: 'age-distribution-chart', // Age Distribution chart
+        // Add other mappings as needed
+    };
+    const images = {};
+    for (const [section, canvasId] of Object.entries(chartMap)) {
+        const canvas = document.getElementById(canvasId);
+        if (canvas && typeof canvas.toDataURL === 'function') {
+            images[section] = canvas.toDataURL('image/png');
+        } else {
+            images[section] = null;
+        }
+    }
+    return images;
+}
