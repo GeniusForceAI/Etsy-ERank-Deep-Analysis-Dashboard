@@ -33,8 +33,8 @@
         padding: 0 !important;
     }
     
-    /* Main container takes full height */
-    .container-fluid {
+    /* Only apply these styles when in upload mode, not dashboard mode */
+    body:not(.dashboard-loaded) .container-fluid {
         min-height: 100vh !important;
         display: flex !important;
         flex-direction: column !important;
@@ -43,13 +43,33 @@
     }
     
     /* Make the row that contains the card center vertically */
-    .row.mb-4#top-section {
+    body:not(.dashboard-loaded) .row.mb-4#top-section {
         display: flex !important;
         min-height: 80vh !important;
         align-items: center !important;
         justify-content: center !important;
         margin: 0 !important;
         padding: 10px !important;
+    }
+    
+    /* Make sure upload section is properly hidden when dashboard is shown */
+    body.dashboard-loaded #loading-section,
+    #loading-section[style*="display: none"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        z-index: -999 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        width: 0 !important;
+        pointer-events: none !important;
+    }
+    
+    /* Ensure dashboard is fully visible */
+    body.dashboard-loaded #results-dashboard {
+        display: block !important;
+        width: 100% !important;
     }
     
     /* Style the loading section */

@@ -203,6 +203,9 @@ function showResultsDashboard() {
         // First, make sure dashboard is visible
         resultsDashboard.style.display = 'block';
         
+        // Add class to body to indicate dashboard is loaded (for CSS targeting)
+        document.body.classList.add('dashboard-loaded');
+        
         // Clear any loading placeholders in the list containers
         const listContainers = ['a-list-container', 'b-list-container', 'c-list-container'];
         listContainers.forEach(containerId => {
