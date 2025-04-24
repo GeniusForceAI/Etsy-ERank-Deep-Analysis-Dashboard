@@ -1,0 +1,28 @@
+/* Collapsible Settings Styles */
+
+/* Settings section with animation */
+#settings-body {
+    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+}
+
+#settings-body.show {
+    max-height: 1000px; /* Large enough to contain all content */
+    opacity: 1;
+}
+
+/* Toggle button styles */
+.settings-toggle {
+    transition: transform 0.3s;
+}
+
+.settings-toggle.active .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* Smooth animation for when content shifts */
+.results-section {
+    transition: margin-top 0.5s ease-in-out;
+}

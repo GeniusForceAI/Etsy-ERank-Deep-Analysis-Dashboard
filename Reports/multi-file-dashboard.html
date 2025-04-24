@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="css/advanced-dashboard.css">
     <link rel="stylesheet" href="css/mobile-dashboard.css">
     <link rel="stylesheet" href="css/multi-file-dark-mode.css">
+    <link rel="stylesheet" href="css/collapsible-settings.css">
     
     <!-- Custom styles for the multi-file dashboard -->
     <style>
@@ -265,10 +266,14 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card floating-card">
-                        <div class="card-header dashboard-section-header">
+                        <div class="card-header dashboard-section-header d-flex justify-content-between align-items-center settings-header">
                             <h2>Analysis Settings</h2>
+                            <button class="btn btn-sm btn-outline-secondary settings-toggle" id="toggle-settings" type="button" data-bs-toggle="collapse" data-bs-target="#settings-body" aria-expanded="false" aria-controls="settings-body">
+                                <i class="fas fa-chevron-down toggle-icon"></i> <span class="toggle-text">Show Settings</span>
+                            </button>
                         </div>
-                        <div class="card-body">
+                        <div class="collapse" id="settings-body">
+                            <div class="card-body">
                             <div class="row">
                                 <!-- Composite Score Weights -->
                                 <div class="col-md-4">
@@ -544,6 +549,7 @@
     <!-- Custom Scripts -->
     <script src="js/dark-mode.js"></script>
     <script src="js/mobile-dashboard.js"></script>
+    <script src="js/collapsible-settings.js"></script>
     <!-- Multi-File Analysis Scripts (load in correct dependency order) -->
     <script src="js/multi-file-core.js"></script>
     <script src="js/multi-file-ranking.js"></script>
