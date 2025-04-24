@@ -26,9 +26,55 @@
         margin-bottom: 0 !important;
     }
     
+    /* Simplified approach for card centering */
+    html, body {
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Main container takes full height */
+    .container-fluid {
+        min-height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    /* Make the row that contains the card center vertically */
+    .row.mb-4#top-section {
+        display: flex !important;
+        min-height: 80vh !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        padding: 10px !important;
+    }
+    
+    /* Style the loading section */
+    #loading-section {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Fix the card styling */
+    #loading-section .card {
+        margin: 10px auto !important;
+        max-width: 95% !important;
+        width: 95% !important;
+    }
+    
     /* Upload area improvements */
     #upload-container {
         padding: 15px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
     /* Improve the upload box */
