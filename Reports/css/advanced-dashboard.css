@@ -592,7 +592,7 @@ body .force-dark-table thead th,
 }
 
 .dark-mode p, .dark-mode .text-muted, .dark-mode small {
-    color: black;
+    color: white;
 }
 
 .dark-mode label {

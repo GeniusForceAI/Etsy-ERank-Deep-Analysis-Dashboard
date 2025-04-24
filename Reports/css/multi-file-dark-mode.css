@@ -1,0 +1,133 @@
+/* Multi-File Dashboard Dark Mode Enhancements */
+
+/* Improve text contrast in dark mode */
+.dark-mode {
+    /* Override existing dark mode variables with better contrast values */
+    --text-color: #f0f0f0;
+    --card-bg: #2d2d30;
+    --muted-color: #d0d0d4;
+    --border-color: #555555;
+}
+
+/* Upload area enhancements for dark mode */
+.dark-mode .upload-area {
+    border-color: #555 !important;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode #upload-container p,
+.dark-mode #multi-upload-area p,
+.dark-mode .lead,
+.dark-mode .card-body p {
+    color: #ffffff !important;
+}
+
+.dark-mode .dashboard-section-header h2 {
+    color: #ffffff;
+}
+
+/* Fix contrast for metric cards in dark mode */
+.dark-mode .metric-card {
+    background-color: #323234;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .metric-card h3 {
+    color: #ffffff;
+}
+
+.dark-mode .metric-card p,
+.dark-mode .metric-value {
+    color: #ffffff;
+}
+
+.dark-mode .metric-card .metric-icon {
+    color: #5a73f4;
+}
+
+/* Improve contrast for listing cards in dark mode */
+.dark-mode .ranking-card {
+    background-color: #323234;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .ranking-card .card-title {
+    color: #ffffff;
+}
+
+.dark-mode .ranking-card .card-subtitle {
+    color: #b0b0b5 !important;
+}
+
+.dark-mode .ranking-card .card-text {
+    color: #d0d0d4;
+}
+
+.dark-mode .ranking-card strong {
+    color: #ffffff;
+}
+
+/* File list items in dark mode */
+.dark-mode .file-item {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .file-item .file-name,
+.dark-mode .selected-files-label,
+.dark-mode #upload-container * {
+    color: #ffffff;
+}
+
+/* Additional upload text improvements */
+.dark-mode #loading-section p,
+.dark-mode .dashboard-section-header p,
+.dark-mode .drag-drop-text,
+.dark-mode .file-upload-text {
+    color: #ffffff !important;
+}
+
+/* Make sure 'or drag and drop files here' text is visible */
+.dark-mode .mt-2.mb-0 {
+    color: #ffffff !important;
+}
+
+/* Make tabs more visible in dark mode */
+.dark-mode .nav-tabs .nav-link {
+    color: #b0b0b5;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .nav-tabs .nav-link.active {
+    color: #ffffff;
+    background-color: #323234;
+    border-color: rgba(255, 255, 255, 0.2);
+    border-bottom-color: #323234;
+}
+
+/* Enhance buttons in dark mode */
+.dark-mode .btn-outline-secondary {
+    color: #b0b0b5;
+    border-color: #555;
+}
+
+.dark-mode .btn-outline-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.dark-mode .btn-outline-light {
+    border-color: rgba(255, 255, 255, 0.3);
+    background-color: white;
+}
+
+/* Fix the sample data link color in dark mode */
+.dark-mode a {
+    color: #7289fc;
+}
+
+.dark-mode a:hover {
+    color: #5a73f4;
+}
