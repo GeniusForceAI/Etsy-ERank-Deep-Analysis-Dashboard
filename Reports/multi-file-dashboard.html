@@ -162,11 +162,13 @@
                         <div id="upload-container" class="text-center py-4">
                             <div class="mb-4">
                                 <p class="lead">Upload multiple ERank CSV files for comprehensive cross-keyword analysis</p>
-                                <div class="multi-upload-area" id="multi-upload-area">
+                                <div class="upload-area p-4 mb-3 mx-auto" id="multi-upload-area" style="max-width: 500px; border: 2px dashed #ccc; border-radius: 8px;">
                                     <i class="fas fa-file-csv fa-3x mb-3 text-primary"></i>
-                                    <p>Drag and drop multiple CSV files here, or click to select files</p>
-                                    <input type="file" id="csv-files-upload" multiple accept=".csv" style="display: none;">
-                                    <button class="btn btn-primary" id="select-files-btn">Select Files</button>
+                                    <div class="d-grid gap-3">
+                                        <button id="select-files-btn-unique" class="btn btn-primary btn-lg">Select CSV Files</button>
+                                        <input type="file" id="csv-files-upload" multiple accept=".csv" style="display: none;">
+                                    </div>
+                                    <p class="mt-2 mb-0">or drag and drop files here</p>
                                 </div>
                                 
                                 <div id="files-list" class="mt-4 text-start" style="display: none;">
@@ -518,6 +520,12 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Lodash for utility functions -->
+    
+    <!-- Basic file handling script -->
+    <script>
+        // Simple logging function to track file upload events
+        console.log('Multi-file dashboard loaded - file upload enabled');
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

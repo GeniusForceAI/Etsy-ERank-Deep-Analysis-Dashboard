@@ -4,12 +4,15 @@
  */
 
 const MultiFileUI = (function() {
+    // Flag to track initialization
+    let isInitialized = false;
+    
     // Cache DOM elements
     const elements = {
         // File Upload Section
         uploadArea: document.getElementById('multi-upload-area'),
         fileInput: document.getElementById('csv-files-upload'),
-        selectFilesBtn: document.getElementById('select-files-btn'),
+        selectFilesBtn: document.getElementById('select-files-btn-unique'),
         filesList: document.getElementById('files-list'),
         filesContainer: document.getElementById('files-container'),
         clearFilesBtn: document.getElementById('clear-files'),
@@ -36,13 +39,71 @@ const MultiFileUI = (function() {
     
     // File upload handling
     function initFileHandling() {
-        // Click handler for file select button
-        elements.selectFilesBtn.addEventListener('click', () => {
+        // Global flag to track dialog state
+        let fileDialogRecentlyOpened = false;
+        let dialogOpenCounter = 0;
+        
+        // Install global click tracker
+        document.addEventListener('click', function(e) {
+            console.log('DEBUG - Document click detected on:', e.target.tagName, e.target.id || e.target.className);
+        }, true);
+        
+        // Monitor file input
+        const originalClick = HTMLInputElement.prototype.click;
+        HTMLInputElement.prototype.click = function() {
+            if (this.type === 'file') {
+                dialogOpenCounter++;
+                console.log('=== FILE DIALOG OPEN #' + dialogOpenCounter + ' ===');
+                console.log('Caller:', new Error().stack);
+                console.trace('Dialog open trace');
+            }
+            return originalClick.apply(this, arguments);
+        };
+
+        // Select files button - with one-time flag hack
+        elements.selectFilesBtn.addEventListener('click', function(e) {
+            console.log('DEBUG - Button click handler - ID:', e.currentTarget.id);
+            // Prevent event from propagating to avoid double-click issues
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Check if dialog was recently opened - prevents immediate reopening
+            if (fileDialogRecentlyOpened) {
+                console.log('DEBUG - Preventing dialog reopen - was recently opened');
+                return;
+            }
+            
+            // Set flag to prevent reopening
+            fileDialogRecentlyOpened = true;
+            console.log('DEBUG - Setting file dialog opened flag - preventing reopens');
+            
+            // Clear flag after a short delay
+            setTimeout(function() {
+                fileDialogRecentlyOpened = false;
+                console.log('DEBUG - File dialog flag cleared - can open again');
+            }, 1500); // Longer delay to be safer
+            
+            // Reset file input value to ensure change event fires even if same files are selected
+            elements.fileInput.value = '';
+            
+            console.log('DEBUG - About to trigger file dialog from button handler');
+            // Manually trigger file dialog
             elements.fileInput.click();
         });
-        
+
         // File input change handler
-        elements.fileInput.addEventListener('change', handleFilesSelected);
+        elements.fileInput.addEventListener('change', function(e) {
+            console.log(`File input change detected with ${this.files.length} files`);
+            
+            // Only process if we have files and input hasn't been processed already
+            if (this.files && this.files.length > 0) {
+                const filesArray = Array.from(this.files);
+                console.log('Processing files:', filesArray.map(f => f.name).join(', '));
+                
+                // Process the files with our multi-file handler
+                addFilesToList(this.files);
+            }
+        });
         
         // Drag and drop functionality
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -63,8 +124,33 @@ const MultiFileUI = (function() {
             });
         });
         
-        // Handle file drop
-        elements.uploadArea.addEventListener('drop', handleFileDrop);
+        // Handle file drop - with one-time flag protection
+        elements.uploadArea.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            // Check if dialog was recently opened - prevents weird interactions
+            if (fileDialogRecentlyOpened) {
+                console.log('File dialog was recently opened, waiting before processing drop');
+                // Still prevent defaults but delay processing
+                setTimeout(function() {
+                    if (files && files.length > 0) {
+                        console.log(`Drop detected with ${files.length} files (delayed processing)`);
+                        addFilesToList(files);
+                    }
+                }, 500);
+                return;
+            }
+            
+            if (files && files.length > 0) {
+                console.log(`Drop detected with ${files.length} files`);
+                // Set flag to prevent reopening
+                fileDialogRecentlyOpened = true;
+                setTimeout(function() { fileDialogRecentlyOpened = false; }, 1000);
+                
+                addFilesToList(files);
+            }
+        });
         
         // Clear files button
         elements.clearFilesBtn.addEventListener('click', clearFiles);
@@ -103,24 +189,57 @@ const MultiFileUI = (function() {
     
     /**
      * Add files to the files list UI and storage
+     * @returns {Promise} Promise that resolves when all files are processed
      */
     function addFilesToList(files) {
-        if (!files || files.length === 0) return;
+        if (!files || files.length === 0) {
+            console.log('No files to add');
+            return Promise.resolve();
+        }
+        
+        console.log(`Adding ${files.length} files to list`);
         
         // Show the files list
         elements.filesList.style.display = 'block';
         
-        // Process each file
+        // Create an array to store all the file processing promises
+        const filePromises = [];
+        const validFiles = [];
+        
+        // First validate all files
         Array.from(files).forEach(file => {
             // Check if it's a CSV file
             if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
-                showNotification('Please upload only CSV files', 'error');
-                return;
+                showNotification(`File ${file.name} is not a CSV file. Please upload only CSV files.`, 'error');
+            } else {
+                validFiles.push(file);
             }
-            
+        });
+        
+        if (validFiles.length === 0) {
+            return Promise.resolve();
+        }
+        
+        // Show a notification for multiple files
+        if (validFiles.length > 1) {
+            showNotification(`Processing ${validFiles.length} CSV files...`, 'info');
+        }
+        
+        // Process each valid file
+        validFiles.forEach(file => {
             // Extract the keyword from the file name (before the extension)
             const fileName = file.name;
             const keyword = fileName.replace(/\.csv$/i, '').trim();
+            
+            // Check if file already exists in the list
+            const existingItem = Array.from(elements.filesContainer.children).find(
+                item => item.dataset.fileName === fileName && item.dataset.keyword === keyword
+            );
+            
+            if (existingItem) {
+                console.log(`File ${fileName} already added, skipping`);
+                return; // Skip this file
+            }
             
             // Create a file item element
             const fileItem = document.createElement('div');
@@ -146,23 +265,43 @@ const MultiFileUI = (function() {
             // Add to data store - log file info for debugging
             console.log(`Adding file: ${file.name}, Size: ${file.size}, Type: ${file.type}, Keyword: ${keyword}`);
             
-            MultiFileCore.addFile(file, keyword)
+            // Store the promise for this file
+            const filePromise = MultiFileCore.addFile(file, keyword)
                 .then(info => {
                     console.log(`Added file: ${info.file.name} with ${info.count} listings`);
-                    showNotification(`Added file: ${info.file.name} with ${info.count} listings`, 'success');
+                    if (validFiles.length === 1) {
+                        // Only show individual notifications for single file uploads
+                        showNotification(`Added file: ${info.file.name} with ${info.count} listings`, 'success');
+                    }
+                    return info;
                 })
                 .catch(err => {
                     console.error(`Error adding file: ${err.message}`);
-                    showNotification(`Error adding file: ${err.message}`, 'error');
+                    showNotification(`Error adding file: ${file.name} - ${err.message}`, 'error');
                     removeFile(fileItem, fileName, keyword);
+                    throw err; // Propagate the error
                 });
+            
+            filePromises.push(filePromise);
         });
-        
-        // Reset the file input
-        elements.fileInput.value = '';
         
         // Update the process button state
         updateProcessButtonState();
+        
+        // Return a promise that resolves when all files have been processed
+        return Promise.all(filePromises)
+            .then(results => {
+                console.log(`All ${filePromises.length} files processed successfully`);
+                if (filePromises.length > 1) {
+                    showNotification(`Successfully added ${filePromises.length} files`, 'success');
+                }
+                return results;
+            })
+            .catch(err => {
+                console.error('Error processing one or more files:', err);
+                // We don't need to show an error notification here since individual errors are already shown
+                return []; // Return empty array instead of re-throwing to allow partial successes
+            });
     }
     
     /**
@@ -376,6 +515,42 @@ const MultiFileUI = (function() {
      * Process the files and run the analysis
      */
     function processFiles() {
+        // Prevent redundant processing
+        if (elements.loadingSection && elements.loadingSection.style.display === 'block') {
+            console.log('Already processing files, ignoring duplicate request');
+            return;
+        }
+        
+        // Ensure we have files to process
+        if (MultiFileCore.getFileCount() === 0) {
+            // If no files uploaded yet but we have files in the input, process those first
+            const inputFiles = elements.fileInput.files;
+            if (inputFiles && inputFiles.length > 0) {
+                // We have files in the input but they weren't processed yet
+                // This happens especially on mobile
+                addFilesToList(inputFiles).then(() => {
+                    // Now process after files are added
+                    processFilesInternal();
+                }).catch(err => {
+                    console.error('Error adding files before processing:', err);
+                    showNotification('Error processing files: ' + err.message, 'error');
+                });
+                return;
+            } else {
+                showNotification('Please upload at least one CSV file first', 'warning');
+                return;
+            }
+        }
+        
+        // Process files normally
+        processFilesInternal();
+    }
+    
+    /**
+     * Internal implementation of file processing
+     * @private
+     */
+    function processFilesInternal() {
         // Show loading state
         showLoading('Processing files for analysis...');
         
@@ -405,8 +580,17 @@ const MultiFileUI = (function() {
     
     // Initialize the module
     function init() {
+        // Check if already initialized to prevent duplicate event handlers
+        if (isInitialized) {
+            console.log('MultiFileUI already initialized - skipping to prevent duplicate handlers');
+            return;
+        }
+        
+        console.log('Initializing MultiFileUI - adding event handlers');
         if (elements.uploadArea) {
             initFileHandling();
+            // Set initialization flag to prevent duplicate initialization
+            isInitialized = true;
         } else {
             console.error('Upload area element not found');
         }
@@ -419,7 +603,7 @@ const MultiFileUI = (function() {
         hideLoading,
         processFiles,
         showNotification,
-        addFilesToList,
+        addFilesToList,  // This needs to be exposed for direct calling
         removeFile,
         clearFiles,
         loadSampleData

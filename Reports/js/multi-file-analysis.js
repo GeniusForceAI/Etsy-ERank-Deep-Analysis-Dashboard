@@ -37,41 +37,10 @@ function setupUIHandlers() {
     const processFilesBtn = document.getElementById('process-files');
     const useSampleDataBtn = document.getElementById('use-sample-multi-data');
     
-    // Click handler for file select button
-    if (selectFilesBtn && fileInput) {
-        selectFilesBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-    }
-    
-    // File input change handler
-    if (fileInput) {
-        fileInput.addEventListener('change', handleFilesSelected);
-    }
-    
-    // Drag and drop functionality
-    if (uploadArea) {
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, preventDefaults);
-        });
-        
-        // Highlight drop area when dragging over it
-        ['dragenter', 'dragover'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, () => {
-                uploadArea.classList.add('highlight');
-            });
-        });
-        
-        // Remove highlight when dragging leaves drop area
-        ['dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, () => {
-                uploadArea.classList.remove('highlight');
-            });
-        });
-        
-        // Handle file drop
-        uploadArea.addEventListener('drop', handleFileDrop);
-    }
+    // NOTE: File upload handlers have been moved to multi-file-ui-fixed.js
+    // to prevent duplicate event handling
+    // ---------------------------------------------------------------
+    console.log('File handlers in multi-file-ui-fixed.js are being used instead');
     
     // Process files button
     if (processFilesBtn) {
@@ -114,19 +83,25 @@ function loadAdditionalModules() {
 }
 
 // Prevent default behavior for events
+// NOTE: This function is no longer used in this file - handlers moved to multi-file-ui-fixed.js
 function preventDefaults(e) {
+    console.warn('preventDefaults in multi-file-analysis.js is deprecated');
     e.preventDefault();
     e.stopPropagation();
 }
 
 // Handle files selected via the file input
+// NOTE: This function is no longer used in this file - handlers moved to multi-file-ui-fixed.js
 function handleFilesSelected(e) {
+    console.warn('handleFilesSelected in multi-file-analysis.js is deprecated');
     const files = e.target.files;
     addFilesToList(files);
 }
 
 // Handle files dropped onto the drop area
+// NOTE: This function is no longer used in this file - handlers moved to multi-file-ui-fixed.js
 function handleFileDrop(e) {
+    console.warn('handleFileDrop in multi-file-analysis.js is deprecated');
     const dt = e.dataTransfer;
     const files = dt.files;
     addFilesToList(files);

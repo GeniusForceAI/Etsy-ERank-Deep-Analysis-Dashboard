@@ -267,12 +267,9 @@ window.showToast = function(message, type = 'info') {
 
 // Initialize when document is ready
 $(document).ready(function() {
-    // Initialize UI modules
-    if (typeof MultiFileUI !== 'undefined' && typeof MultiFileUI.init === 'function') {
-        MultiFileUI.init();
-    } else {
-        console.error('MultiFileUI module not found');
-    }
+    // MultiFileUI is already initialized in its own file via DOMContentLoaded
+    // No need to initialize it again here - this was causing duplicate event handlers
+    console.log('MultiFileUI initialization skipped in multi-file-analysis-fixed.js to prevent duplicate event handlers');
     
     if (typeof MultiFileUIAnalysis !== 'undefined' && typeof MultiFileUIAnalysis.init === 'function') {
         MultiFileUIAnalysis.init();

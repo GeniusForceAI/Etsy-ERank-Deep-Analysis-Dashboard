@@ -421,6 +421,14 @@ const MultiFileCore = (function() {
         };
     }
     
+    /**
+     * Get the count of files currently loaded
+     * @returns {number} - The number of files
+     */
+    function getFileCount() {
+        return keywordFiles.length;
+    }
+
     // Public API
     return {
         addFile,
@@ -431,6 +439,7 @@ const MultiFileCore = (function() {
         getKeywordFiles,
         getStats,
         updateSettings,
-        getSettings
+        getSettings,
+        getFileCount
     };
 })();
