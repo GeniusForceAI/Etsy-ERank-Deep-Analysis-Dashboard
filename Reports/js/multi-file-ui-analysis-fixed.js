@@ -56,6 +56,21 @@ const MultiFileUIAnalysis = (function() {
         stats: {}
     };
     
+    /**
+     * Set the analysis results from external data
+     * This is crucial for syncing with data processed in other modules
+     */
+    function setAnalysisResults(results) {
+        console.log('Setting analysis results from external source:', results);
+        if (results) {
+            analysisResults = results;
+        } else if (window.analysisResults) {
+            // Try to get from global scope if direct results not provided
+            console.log('Using global analysisResults instead');
+            analysisResults = window.analysisResults;
+        }
+    }
+    
     // Store chart objects for updating
     let charts = {
         keywordDistribution: null,
@@ -815,6 +830,44 @@ const MultiFileUIAnalysis = (function() {
         initAnalysisUI();
     }
     
+    /**
+     * Force render all lists and activate the A-list tab
+     * This can be called from other modules to ensure lists appear immediately
+     */
+    function forceRenderLists() {
+        console.log('Force rendering lists and activating tabs');
+        
+        // CRITICAL FIX: Sync with global analysisResults first!
+        // This ensures we're using the data that was calculated in multi-file-analysis-fixed.js
+        if (window.analysisResults) {
+            console.log('Syncing with global analysisResults before rendering');
+            setAnalysisResults(window.analysisResults);
+        } else {
+            console.warn('Global analysisResults not available - lists may be empty');
+        }
+        
+        // Clear any loading placeholders
+        if (elements.aListContainer) elements.aListContainer.innerHTML = '';
+        if (elements.bListContainer) elements.bListContainer.innerHTML = '';
+        if (elements.cListContainer) elements.cListContainer.innerHTML = '';
+        
+        // Render the lists
+        renderLists();
+        
+        // Activate A-list tab explicitly using Bootstrap's tab API
+        setTimeout(() => {
+            try {
+                if (elements.aListTab && typeof bootstrap !== 'undefined') {
+                    console.log('Explicitly activating A-list tab via Bootstrap API');
+                    const bsTab = new bootstrap.Tab(elements.aListTab);
+                    bsTab.show();
+                }
+            } catch (e) {
+                console.error('Error activating tab:', e);
+            }
+        }, 50);
+    }
+    
     // Public API
     return {
         init,
@@ -825,7 +878,9 @@ const MultiFileUIAnalysis = (function() {
         createVisualizations,
         updateVisualizations,
         generateInsights,
-        showNotification
+        showNotification,
+        forceRenderLists,  // Method to force render lists
+        setAnalysisResults   // Method to sync with global analysisResults
     };
 })();
 

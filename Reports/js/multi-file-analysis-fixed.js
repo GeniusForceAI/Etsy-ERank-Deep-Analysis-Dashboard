@@ -64,28 +64,71 @@ window.processFiles = function() {
         stats: enhancedStats
     };
     
-    // Display lists through the UI module
-    MultiFileUIAnalysis.renderLists();
+    // Critical fix: Explicitly sync the global results with the UI module's local variable
+    // This ensures the UI module has access to the calculated data
+    if (typeof MultiFileUIAnalysis !== 'undefined' && typeof MultiFileUIAnalysis.setAnalysisResults === 'function') {
+        console.log('Explicitly syncing analysis results with UI module');
+        MultiFileUIAnalysis.setAnalysisResults(window.analysisResults);
+    } else {
+        console.warn('Could not sync analysis results - UI module not available');
+    }
     
     updateProgress(80, 'Updating dashboard...');
     
     // Update dashboard stats
     updateDashboardStats(aList, bList, cList, allListings);
     
+    // KEY FIX: Pre-render all lists and visuals BEFORE showing the dashboard
+    // This ensures everything is already ready when the dashboard appears
+    if (typeof MultiFileUIAnalysis.renderLists === 'function') {
+        console.log('Pre-rendering lists before showing the dashboard');
+        MultiFileUIAnalysis.renderLists();
+    }
+    
     // Create visualizations
-    MultiFileUIAnalysis.createVisualizations();
+    if (typeof MultiFileUIAnalysis.createVisualizations === 'function') {
+        console.log('Pre-rendering visualizations before showing the dashboard');
+        MultiFileUIAnalysis.createVisualizations();
+    }
     
     updateProgress(90, 'Generating insights...');
     
     // Generate insights
-    MultiFileUIAnalysis.generateInsights();
+    if (typeof MultiFileUIAnalysis.generateInsights === 'function') {
+        console.log('Generating insights before showing the dashboard');
+        MultiFileUIAnalysis.generateInsights();
+    }
     
     updateProgress(100, 'Complete!');
+    
+    // Clear any loading placeholders from list containers before showing dashboard
+    const listContainers = ['a-list-container', 'b-list-container', 'c-list-container'];
+    listContainers.forEach(containerId => {
+        const container = document.getElementById(containerId);
+        if (container && container.innerHTML.includes('Loading')) {
+            console.log('Clearing loading placeholder from', containerId);
+            container.innerHTML = '';
+        }
+    });
     
     // Show success message
     setTimeout(() => {
         showSuccessMessage();
+        
+        // Show results dashboard - must happen after all render operations
         showResultsDashboard();
+        
+        // CRITICAL FIX: Use the dedicated forceRenderLists function from MultiFileUIAnalysis
+        // This function will handle clearing loading placeholders, rendering lists, and activating tabs
+        setTimeout(() => {
+            if (typeof MultiFileUIAnalysis !== 'undefined' && typeof MultiFileUIAnalysis.forceRenderLists === 'function') {
+                console.log('Calling forceRenderLists to ensure A/B/C lists show immediately');
+                // This function handles everything we need to ensure lists show properly
+                MultiFileUIAnalysis.forceRenderLists();
+            } else {
+                console.error('MultiFileUIAnalysis.forceRenderLists is not available');
+            }
+        }, 200);
     }, 500);
 };
 
@@ -155,7 +198,38 @@ function showResultsDashboard() {
     }
     
     if (resultsDashboard) {
+        console.log('Showing results dashboard and ensuring lists are rendered correctly');
+        
+        // First, make sure dashboard is visible
         resultsDashboard.style.display = 'block';
+        
+        // Clear any loading placeholders in the list containers
+        const listContainers = ['a-list-container', 'b-list-container', 'c-list-container'];
+        listContainers.forEach(containerId => {
+            const container = document.getElementById(containerId);
+            if (container) {
+                // Clear loading placeholders
+                container.innerHTML = '';
+            }
+        });
+        
+        // Ensure the lists are rendered after the dashboard is visible
+        // and Bootstrap tabs are properly initialized
+        setTimeout(() => {
+            // Force re-render of lists
+            if (window.analysisResults && typeof MultiFileUIAnalysis !== 'undefined') {
+                console.log('Rendering A/B/C lists with analysis results');
+                MultiFileUIAnalysis.renderLists();
+                
+                // Activate the A-list tab to ensure content is visible
+                const aListTab = document.getElementById('a-list-tab');
+                if (aListTab) {
+                    // Using Bootstrap's tab API to activate the tab
+                    const bsTab = new bootstrap.Tab(aListTab);
+                    bsTab.show();
+                }
+            }
+        }, 100);
     }
     
     // Scroll to top
