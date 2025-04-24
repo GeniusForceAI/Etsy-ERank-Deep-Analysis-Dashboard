@@ -1,5 +1,92 @@
 /* Direct fixes for mobile centering based on actual DOM inspection */
 @media (max-width: 767.98px) {
+    /* Fix Dark Mode Toggle Position - move to absolute top right */
+    #dark-mode-toggle {
+        position: absolute !important;
+        top: 20px !important;
+        right: 20px !important;
+        width: 40px !important;
+        height: 40px !important;
+        min-width: unset !important;
+        padding: 8px !important;
+        margin: 0 !important;
+        z-index: 1000 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 50% !important;
+    }
+    
+    /* Fix header styling for upload page */
+    .dashboard-section-header {
+        text-align: center !important;
+        padding-top: 10px !important;
+        padding-right: 50px !important; /* Make space for the toggle */
+        padding-bottom: 10px !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Upload area improvements */
+    #upload-container {
+        padding: 15px !important;
+    }
+    
+    /* Improve the upload box */
+    .multi-upload-area, .upload-area {
+        padding: 15px !important;
+        margin: 10px auto !important;
+        max-width: 100% !important;
+        width: 90% !important;
+    }
+    
+    /* Center CSV icon and button */
+    .multi-upload-area .text-center {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Make select files button more tappable */
+    .btn.btn-primary.select-files-btn {
+        min-height: 44px !important;
+        padding: 10px 20px !important;
+        font-size: 1rem !important;
+        width: 80% !important;
+        max-width: 250px !important;
+        margin: 10px auto !important;
+    }
+    
+    /* Fix padding and margins for upload text */
+    .lead, p.lead {
+        font-size: 1.1rem !important;
+        margin-bottom: 15px !important;
+        padding: 0 10px !important;
+        text-align: center !important;
+    }
+    
+    /* Fix file upload text */
+    .drag-drop-text, .file-upload-text, .mt-2.mb-0 {
+        font-size: 0.9rem !important;
+        margin-top: 10px !important;
+    }
+    
+    /* Fix sample data link */
+    .btn-link {
+        padding: 8px !important;
+        margin-top: 10px !important;
+        display: inline-block !important;
+    }
+    
+    /* Improve header title on mobile */
+    .dashboard-section-header h2 {
+        width: 100% !important;
+        text-align: center !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        font-size: 1.5rem !important;
+    }
+    
     /* Override any flex justify-content */
     div[class*="justify-content"], div[class*="flex-justify"] {
         justify-content: center !important;
