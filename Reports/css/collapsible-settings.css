@@ -1,28 +1,96 @@
-/* Collapsible Settings Styles */
+/* Floating Settings Button and Modal Dialog */
 
-/* Settings section with animation */
-#settings-body {
-    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
-    overflow: hidden;
-    max-height: 0;
-    opacity: 0;
+/* Floating button styles */
+.floating-settings-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--primary-color, #007bff);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    z-index: 1040;
+    transition: all 0.3s ease;
+    border: none;
 }
 
-#settings-body.show {
-    max-height: 1000px; /* Large enough to contain all content */
-    opacity: 1;
+.floating-settings-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* Toggle button styles */
-.settings-toggle {
-    transition: transform 0.3s;
+.floating-settings-btn i {
+    font-size: 24px;
 }
 
-.settings-toggle.active .toggle-icon {
-    transform: rotate(180deg);
+/* Modal settings dialog */
+.settings-modal .modal-content {
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: none;
 }
 
-/* Smooth animation for when content shifts */
-.results-section {
-    transition: margin-top 0.5s ease-in-out;
+.settings-modal .modal-header {
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    background-color: var(--primary-color, #007bff);
+    color: white;
+}
+
+.settings-modal .modal-title {
+    font-weight: 600;
+}
+
+.settings-modal .modal-body {
+    padding: 25px;
+}
+
+.settings-modal .modal-footer {
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+/* Animation for modal */
+.settings-modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: scale(0.9);
+}
+
+.settings-modal.show .modal-dialog {
+    transform: scale(1);
+}
+
+/* Dark mode support */
+.dark-mode .settings-modal .modal-content {
+    background-color: #2d2d30;
+    color: #ffffff;
+}
+
+.dark-mode .settings-modal .modal-header {
+    border-bottom: 1px solid #444;
+}
+
+.dark-mode .settings-modal .modal-footer {
+    border-top: 1px solid #444;
+}
+
+.dark-mode .form-label {
+    color: #d0d0d4;
+}
+
+.dark-mode .form-range::-webkit-slider-runnable-track {
+    background-color: #444;
+}
+
+.dark-mode .settings-modal .form-select,
+.dark-mode .settings-modal .form-control {
+    background-color: #3e3e42;
+    color: #ffffff;
+    border-color: #555;
 }
