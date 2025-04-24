@@ -166,30 +166,90 @@ function showResultsDashboard() {
 }
 
 /**
- * Update dashboard stats
+ * Update dashboard stats with market insights
  */
 function updateDashboardStats(aList, bList, cList, allListings) {
-    const fileCountEl = document.getElementById('files-count');
-    const listingsCountEl = document.getElementById('listings-count');
-    const avgSalesEl = document.getElementById('avg-sales');
+    const dailyViewsEl = document.getElementById('daily-views');
+    const viewsPerSaleEl = document.getElementById('views-per-sale');
+    const marketRevenueEl = document.getElementById('market-revenue');
     
     // Get files count from core module
     const keywordFiles = MultiFileCore.getKeywordFiles();
     
-    if (fileCountEl) {
-        fileCountEl.textContent = keywordFiles.length;
+    // Only proceed if we have listings data
+    if (!allListings || allListings.length === 0) return;
+    
+    // Calculate daily market views
+    if (dailyViewsEl) {
+        const totalDailyViews = allListings.reduce((sum, item) => {
+            // Some listings may have daily views stored in different fields
+            const views = item['Daily Views'] || item['Views Daily'] || item['Daily Traffic'] || 0;
+            return sum + (parseFloat(views) || 0);
+        }, 0);
+        
+        // Format with commas for thousands
+        dailyViewsEl.textContent = totalDailyViews.toLocaleString();
     }
     
-    // Total listings count
-    if (listingsCountEl) {
-        listingsCountEl.textContent = allListings ? allListings.length : 0;
+    // Calculate average views per sale ratio
+    if (viewsPerSaleEl) {
+        // Two calculation approaches - method 1 is to calculate per-listing views/sale first, then average
+        // Method 2 is to total all views and sales, then divide - we'll use method 1 for better accuracy
+        
+        // Method 1: Calculate views/sale for each listing, then average them
+        let listingViewsPerSale = [];
+        
+        allListings.forEach(item => {
+            // Get views and sales data, checking multiple possible field names
+            const monthlyViews = parseFloat(item['Monthly Views'] || item['Views Monthly'] || item['Monthly Traffic'] || 0) || 0;
+            const dailyViews = parseFloat(item['Daily Views'] || item['Views Daily'] || item['Daily Traffic'] || 0) || 0;
+            
+            // Use monthly views if available, otherwise multiply daily by 30
+            const views = monthlyViews > 0 ? monthlyViews : (dailyViews * 30);
+            
+            const sales = parseFloat(item['Est. Sales'] || item['Monthly Sales'] || 0) || 0;
+            
+            // Only include listings that have both views and sales data
+            if (views > 0 && sales > 0) {
+                const ratio = views / sales;
+                listingViewsPerSale.push(ratio);
+            }
+        });
+        
+        // Calculate the average views per sale across all listings
+        if (listingViewsPerSale.length > 0) {
+            const totalRatio = listingViewsPerSale.reduce((sum, ratio) => sum + ratio, 0);
+            const avgViewsPerSale = totalRatio / listingViewsPerSale.length;
+            viewsPerSaleEl.textContent = avgViewsPerSale.toFixed(1);
+        } else {
+            viewsPerSaleEl.textContent = 'N/A';
+        }
     }
     
-    // Calculate average sales across all files
-    if (avgSalesEl && allListings && allListings.length > 0) {
-        const totalSales = allListings.reduce((sum, item) => sum + (item['Est. Sales'] || 0), 0);
-        const avgSales = totalSales / allListings.length;
-        avgSalesEl.textContent = avgSales.toFixed(1);
+    // Calculate estimated market revenue
+    if (marketRevenueEl) {
+        const totalRevenue = allListings.reduce((sum, item) => {
+            // Handle price safely - might be string, number, or undefined
+            let price = 0;
+            if (item['Price']) {
+                // If price is a string (e.g. '$24.99'), clean it
+                if (typeof item['Price'] === 'string') {
+                    price = parseFloat(item['Price'].replace(/[^0-9.]/g, '')) || 0;
+                } else {
+                    // If price is already a number
+                    price = parseFloat(item['Price']) || 0;
+                }
+            }
+            
+            const sales = parseFloat(item['Est. Sales'] || item['Monthly Sales'] || 0) || 0;
+            return sum + (price * sales);
+        }, 0);
+        
+        // Format as currency with $ sign and commas
+        marketRevenueEl.textContent = '$' + totalRevenue.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
     }
 }
 

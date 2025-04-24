@@ -27,9 +27,9 @@ const MultiFileUI = (function() {
         
         // Results Dashboard
         resultsDashboard: document.getElementById('results-dashboard'),
-        fileCount: document.getElementById('files-count'),
-        listingsCount: document.getElementById('listings-count'),
-        avgSales: document.getElementById('avg-sales'),
+        dailyViews: document.getElementById('daily-views'),
+        viewsPerSale: document.getElementById('views-per-sale'),
+        marketRevenue: document.getElementById('market-revenue'),
         
         // Lists Containers
         aListContainer: document.getElementById('a-list-container'),
